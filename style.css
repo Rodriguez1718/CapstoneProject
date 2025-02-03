@@ -50,7 +50,10 @@ body {
 }
 
 #sidebar ul {
+    display: flex;
     list-style: none;
+    flex-direction: column;
+    height: 90%;
 }
 
 #sidebar>ul>li:first-child {
@@ -63,7 +66,15 @@ body {
     }
 }
 
+#members-link {
+    margin-top: auto;
+}
 
+.footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+}
 
 #sidebar ul li.active a {
     color: var(--accent-clr);
