@@ -115,8 +115,11 @@ body {
     flex-grow: 1;
 }
 
-#sidebar a:hover,
-#sidebar .dropdown-btn:hover {
+#sidebar a {
+    transition: background-color 0.3s ease-in-out;
+}
+
+#sidebar a:hover {
     background-color: var(--hover-clr);
 }
 
@@ -184,6 +187,7 @@ main p {
         margin-top: 1em;
     }
 }
+
 
 @media(max-width: 800px) {
     body {
