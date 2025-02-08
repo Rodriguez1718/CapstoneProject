@@ -110,10 +110,10 @@ body {
     fill: var(--text-clr);
 }
 
-#sidebar a span,
+/* #sidebar a span,
 #sidebar .dropdown-btn span {
     flex-grow: 1;
-}
+} */
 
 #sidebar a {
     transition: background-color 0.3s ease-in-out;

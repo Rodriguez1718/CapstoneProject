@@ -23,7 +23,7 @@ function toggleSubMenu(button) {
     }
 }
 
-function closeAllSubMenus() {
+function closeAllSubMenuss() {
     Array.from(sidebar.getElementsByClassName('show')).forEach(ul => {
         ul.classList.remove('show')
         ul.previousElementSibling.classList.remove('rotate')
