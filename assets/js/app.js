@@ -52,3 +52,21 @@ document.addEventListener("DOMContentLoaded", function () {
     handleScroll(); // Run on load
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const menuBtn = document.getElementById("menu-btn")
+    const navLinks = document.getElementById("nav-links")
+
+    menuBtn.addEventListener("click", function () {
+        navLinks.classList.toggle("active")
+    })
+})
+
+function showSidebar() {
+    const sidebar = document.querySelector('.side-bar')
+    sidebar.style.display = 'flex'
+}
+
+function hideSidebar() {
+    const sidebar = document.querySelector('.side-bar')
+    sidebar.style.display = 'none'
+}

@@ -10,14 +10,24 @@
 </head>
 <body>
     <nav id="topbar">
-        <div class="logo">FurEver Family</div>
-        <ul>
+        <ul class="side-bar">
+            <li onclick=hideSidebar()><a href="#">X</a></li>
             <li><a href="index.html">Home</a></li>
-            <li><a href="dashboard.html">Adopt a Pet</a></li>
-            <li><a href="calendar.html">About Us</a></li>
+            <li><a href="#adopt-now">Adopt a Pet</a></li>
+            <li><a href="#about-us">About Us</a></li>
             <li><a href="profile.html">Volunteer/Donate</a></li>
             <li><a href="contact.html">Contact Us</a></li>
             <li><a class="member" href="members.html">Members</a></li>
+        </ul>
+        <ul>
+            <li><a href="index.html">FurEver Family</a></li>
+            <li class="hideOnMobile"><a href="index.html">Home</a></li>
+            <li class="hideOnMobile"><a href="#adopt-now">Adopt a Pet</a></li>
+            <li class="hideOnMobile"><a href="#about-us">About Us</a></li>
+            <li class="hideOnMobile"><a href="profile.html">Volunteer/Donate</a></li>
+            <li class="hideOnMobile"><a href="contact.html">Contact Us</a></li>
+            <li class="hideOnMobile"><a class="member" href="members.html">Members</a></li>
+            <li class="menu-button" onclick=showSidebar()><a href="#">X</a></li>
         </ul>
     </nav>
     <main>
@@ -33,7 +43,7 @@
             </div>
         </section>
 
-        <section class="about-us">
+        <section id="about-us" class="about-us">
             <div class="about-image">
                 <img src="/assets/image/rescue-team.jpg" alt="Team caring for rescued animals">
             </div>
@@ -52,25 +62,27 @@
             
         </section>
 
-        <section class="what-we-do">
-            <h2>What We Do</h2>
-            <div class="services">
-                <div class="service">
+        <section class="grid grid-1 what-we-do">
+            <div>
+                <h2>What We Do</h2>
+            </div>
+            
+                <div class="service autoShow">
                     <i class="fas fa-paw"></i>
                     <h3>Rescue & Shelter</h3>
                     <p>We rescue abandoned and stray animals, providing them with food, shelter, and medical care.</p>
                 </div>
-                <div class="service">
+                <div class="service autoShow">
                     <i class="fas fa-heart"></i>
                     <h3>Adoption Services</h3>
                     <p>We match pets with loving families to give them a second chance at happiness.</p>
                 </div>
-                <div class="service">
+                <div class="service autoShow">
                     <i class="fas fa-hands-helping"></i>
                     <h3>Community Outreach</h3>
                     <p>We educate the community on responsible pet ownership and animal welfare.</p>
                 </div>
-            </div>
+            
         </section>
 
 
@@ -86,7 +98,7 @@
             </div>
         </section>
 
-        <section class="cta">
+        <section id="adopt-now" class="cta">
             <h2>Ready to Change a Life?</h2>
             <p>Take the first step towards welcoming a furry friend into your home.</p>
             <a href="dashboard.html" class="btn">Adopt Now</a>
