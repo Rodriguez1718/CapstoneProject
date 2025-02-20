@@ -26,6 +26,7 @@ body {
     background-color: var(--base-clr);
     color: var(--text-clr);
     overflow-x: hidden;
+    min-width: 100vw;
 }
 
 #about-us {
@@ -209,7 +210,9 @@ body {
 }
 
 main {
-    padding: min(30px, 7%) min(30px, 7%) 0;
+    padding-left: min(30px, 7%);
+    padding-right: min(30px, 7%);
+    padding-top: min(30px, 7%);
 }
 
 main p {
@@ -281,9 +284,6 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
     justify-content: center;
     background-color: #ffffff;
     width: 100vw;
-    margin-left: calc(-1 * min(30px, 7%));
-    /* Counteract main's padding */
-    margin-right: calc(-1 * min(30px, 7%));
     line-height: 1.2;
     margin-top: 0;
 }
@@ -304,7 +304,6 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
 
 .about {
     text-align: center;
-    padding: 50px 20px;
     justify-content: center;
     line-height: 1.5;
 }
@@ -454,7 +453,6 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
 } */
 
 .testimonials {
-    padding: 60px 20px;
     text-align: center;
     background-color: #8a97e9;
     justify-content: center;
@@ -697,6 +695,8 @@ body {
     overflow-x: hidden;
 }
 
+
+
 @keyframes appear {
     from {
         opacity: 0;
@@ -733,10 +733,6 @@ body {
         grid-template-columns: 1fr;
     }
 
-    main {
-        padding: 2em 1em 60px 1em;
-    }
-
     .hideOnMobile {
         display: none;
     }
@@ -749,6 +745,8 @@ body {
         flex-direction: column;
         height: auto;
         padding: 10px;
+        margin: 0 auto;
+        overflow: hidden;
     }
 
     #topbar ul {
@@ -765,7 +763,6 @@ body {
 
     .hero {
         text-align: center;
-        padding: 8vh 5%;
         max-width: 90%;
         margin: 0 auto;
         overflow: hidden;
@@ -802,7 +799,6 @@ body {
         display: flex;
         flex-direction: column;
         gap: 10px;
-        padding: 10px;
     }
 
     .grid-2 div {
@@ -821,4 +817,96 @@ body {
         line-height: 1.5;
     }
 
+}
+
+@media (max-width: 400px) {
+
+    body,
+    html {
+        width: 100%;
+        overflow-x: hidden;
+    }
+
+    #topbar {
+        max-width: 100%;
+    }
+
+    #topbar ul {
+        width: 100%;
+    }
+
+    #topbar ul li {
+        width: 100%;
+        text-align: center;
+    }
+
+    .hero {
+        padding: 6vh 5%;
+        max-width: 95%;
+        margin: 0 auto;
+    }
+
+    .hero h1 {
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+    }
+
+    .hero p {
+        font-size: clamp(0.8rem, 2vw, 1.2rem);
+    }
+
+    .hero img {
+        max-width: 90%;
+        height: auto;
+    }
+
+    .grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .grid-1 div,
+    .grid-2 div {
+        width: 100%;
+    }
+
+    .grid-2 p {
+        font-size: 0.8em;
+        line-height: 1.5;
+    }
+
+    .about-us {
+        gap: 20px;
+        padding: 40px 5%;
+    }
+
+    .about-image {
+        max-width: 80%;
+    }
+
+    .testimonials {
+        padding: 40px 10px;
+    }
+
+    .testimonial {
+        max-width: 90%;
+        padding: 15px;
+    }
+
+    .cta {
+        padding: 40px 10px;
+    }
+
+    .cta h2 {
+        font-size: 28px;
+    }
+
+    .cta p {
+        font-size: 16px;
+    }
+
+    .cta .btn {
+        font-size: 16px;
+        padding: 10px 20px;
+    }
 }
