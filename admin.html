@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/assets/css/adminstyle.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span> Pet Adoption</span>
+            </div>
+            <nav>
+                <a href="#" class="active"> Employees</a>
+            </nav>
+            <button class="logout" onclick="logout()"> Logout</button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <header>
+                <h1>Employee Management</h1>
+                <button id="addEmployeeBtn"> Add Employee</button>
+            </header>
+
+            <!-- Search Bar -->
+            <input type="text" id="search" placeholder="Search employees..." onkeyup="searchEmployees()">
+
+            <!-- Employee Table -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeTable"></tbody>
+            </table>
+        </main>
+    </div>
+
+    <!-- Employee Form Modal -->
+    <div id="employeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Add Employee</h2>
+            <form id="employeeForm">
+                <input type="hidden" id="editIndex">
+                <input type="text" id="name" placeholder="Name" required>
+                <input type="text" id="role" placeholder="Role" required>
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="tel" id="phone" placeholder="Phone" required>
+                <button type="submit">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/assets/js/admin.js"></script>
+</body>
+</html>
