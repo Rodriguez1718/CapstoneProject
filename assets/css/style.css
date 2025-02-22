@@ -296,7 +296,7 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
 }
 
 .our-mission p {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     text-align: center;
     line-height: 1.2;
     color: #666;
@@ -383,7 +383,7 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
 }
 
 .grid-1 {
-    --row: 4;
+    --row: 5;
     font-size: 1.7em;
 }
 
@@ -394,23 +394,23 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
 }
 
 .grid-1 div:nth-child(2) {
-    grid-column: 4 / 7;
+    grid-column: 3 / 7;
     grid-row: 2;
 }
 
 .grid-1 div:nth-child(3) {
-    grid-column: 1 / 4;
+    grid-column: 1 / 7;
     grid-row: 3;
     margin-left: 20px;
 }
 
 .grid-1 div:nth-child(4) {
-    grid-column: 4 / 7;
+    grid-column: 3 / 7;
     grid-row: 4;
 }
 
 .grid-2 {
-    --row: 4;
+    --row: 5;
     font-size: 1.7em;
 }
 
@@ -456,6 +456,10 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
     text-align: center;
     background-color: #8a97e9;
     justify-content: center;
+}
+
+.testimonial-content {
+    margin-top: 50px;
 }
 
 .testimonials h2 {
@@ -565,6 +569,9 @@ section:not(.about-content, .about-us, .grid, .grid-1, .what-we-do) {
     max-width: 200px;
     /* Adjust image size */
     height: auto;
+    width: 20%;
+    left: 50%;
+    transform-origin: center;
     transform: translateX(-400%) rotate(20deg);
 }
 
@@ -825,6 +832,10 @@ body {
     html {
         width: 100%;
         overflow-x: hidden;
+    }
+
+    .paw {
+        width: 40%;
     }
 
     #topbar {
