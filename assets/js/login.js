@@ -17,32 +17,50 @@ function login() {
     const password = document.getElementById('login-password').value;
     const errorMessage = document.getElementById('login-error');
 
-    // Dummy credentials for testing
-    const storedUser = localStorage.getItem('adminUser');
-    const storedPass = localStorage.getItem('adminPass');
-
-    if (username === storedUser && password === storedPass) {
-        window.location.href = "admin.html"; // Redirect to admin page
-    } else {
-        errorMessage.style.display = "block";
-    }
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: username, password: password })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                localStorage.setItem("isLoggedIn", true); // Store login state
+                window.location.href = data.redirect; // Redirect to admin page
+            } else {
+                errorMessage.style.display = "block";
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            errorMessage.style.display = "block";
+        });
 }
 
 function register() {
     const username = document.getElementById('register-username').value;
     const password = document.getElementById('register-password').value;
 
-    if (username && password) {
-        localStorage.setItem('adminUser', username);
-        localStorage.setItem('adminPass', password);
-        alert('Registration successful! You can now login.');
-        showTab('login');
-    } else {
-        alert('Please enter a valid username and password.');
-    }
+    fetch('/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: username, password: password })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                alert('Registration successful! You can now login.');
+                showTab('login');
+            } else {
+                alert(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
 }
-
-document.querySelector(".btn").addEventListener("click", function () {
-    localStorage.setItem("isLoggedIn", "true"); // Set login flag
-    window.location.href = "admin.html"; // Redirect to admin page
-});

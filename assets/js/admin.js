@@ -32,8 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("modalTitle").textContent = "Add Employee";
         employeeForm.reset();
         editIndex.value = "";
-        employeeModal.style.display =
-            employeeModal.style.display = "flex";
+        employeeModal.style.display = "flex";
     });
 
     // Close modal
@@ -74,8 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${employee.email}</td>
                 <td>${employee.phone}</td>
                 <td>
-                    <button onclick="editEmployee(${index})"> Edit</button>
-                    <button onclick="deleteEmployee(${index})"> Delete</button>
+                    <button onclick="editEmployee(${index})">Edit</button>
+                    <button onclick="deleteEmployee(${index})">Delete</button>
                 </td>
             `;
             employeeTable.appendChild(row);
@@ -121,8 +120,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 <td>${employee.email}</td>
                 <td>${employee.phone}</td>
                 <td>
-                    <button onclick="editEmployee(${index})"> Edit</button>
-                    <button onclick="deleteEmployee(${index})"> Delete</button>
+                    <button onclick="editEmployee(${index})">Edit</button>
+                    <button onclick="deleteEmployee(${index})">Delete</button>
                 </td>
             `;
             employeeTable.appendChild(row);
@@ -132,10 +131,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // Logout function
     window.logout = () => {
         if (confirm("Are you sure you want to logout?")) {
-            alert("Logged out successfully!");
-            localStorage.removeItem("isLoggedIn");
-            window.location.href = "loginAdmin.html";
-            // Redirect or clear session (depending on backend)
+            fetch('/logout', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Logged out successfully!");
+                        localStorage.removeItem("isLoggedIn");
+                        sessionStorage.clear();
+                        window.location.href = "loginAdmin";
+                    } else {
+                        alert("Logout failed. Please try again.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred. Please try again.");
+                });
         }
     };
 });
@@ -143,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", function () {
     // Check if user is logged in
     if (!localStorage.getItem("isLoggedIn")) {
-        window.location.href = "loginAdmin.html"; // Redirect to login if not logged in
+        window.location.href = "loginAdmin"; // Redirect to login if not logged in
     }
 
     // Prevent back navigation after logout
@@ -153,7 +168,4 @@ document.addEventListener("DOMContentLoaded", function () {
     };
 });
 
-function logout() {
-    localStorage.removeItem("isLoggedIn"); // Remove login state
-    window.location.href = "loginAdmin.html"; // Redirect to login
-}
+
