@@ -19,16 +19,20 @@ function login() {
 
     fetch('/login', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: username, password: password })
     })
         .then(response => response.json())
         .then(data => {
             if (data.message) {
-                localStorage.setItem("isLoggedIn", true); // Store login state
-                window.location.href = data.redirect; // Redirect to admin page
+                localStorage.setItem("isLoggedIn", "true");  // Store login state
+                localStorage.setItem("role", data.role);  // Store user role
+
+                if (data.role === "admin") {
+                    window.location.href = "/admin";  // Redirect to admin page
+                } else {
+                    window.location.href = "/adopt";  // Redirect to adopter page
+                }
             } else {
                 errorMessage.style.display = "block";
             }

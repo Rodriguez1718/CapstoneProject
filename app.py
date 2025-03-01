@@ -26,7 +26,7 @@ def home():
 def login_page():
     return render_template("loginAdmin.html")
 
-# Login API
+# Login API (Redirects based on role)
 @app.route("/login", methods=["POST"])
 def login():
     data = request.json
@@ -35,15 +35,20 @@ def login():
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT PASSWORD FROM USERS WHERE NAME = ?", (name,))
+    cursor.execute("SELECT name, password, role FROM users WHERE name = ?", (name,))
     user = cursor.fetchone()
     conn.close()
 
-    if user and bcrypt.check_password_hash(user[0], password):
-        session["user"] = name  # Store in session
-        return jsonify({"message": "Login successful", "redirect": "/admin"})
+    if user and bcrypt.check_password_hash(user[1], password):  # If passwords match
+        session["user"] = name
+        session["role"] = user[2]  # Store role in session
+        
+        if user[2] == "admin":
+            return jsonify({"message": "Login successful", "role": "admin", "redirect": "/admin"})
+        elif user[2] == "adopter":
+            return jsonify({"message": "Login successful", "role": "adopter", "redirect": "/adopt"})
     else:
-        return jsonify({"error": "Invalid username or password"}), 401
+        return jsonify({"error": "Invalid credentials"}), 401
 
 # Register API
 @app.route("/register", methods=["POST"])
@@ -51,37 +56,46 @@ def register():
     data = request.json
     name = data.get("name")
     password = data.get("password")
-    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+    role = data.get("role", "adopter")  # Default role is "adopter"
+
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")  # Hash password
 
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Check if user exists
-    cursor.execute("SELECT * FROM USERS WHERE NAME = ?", (name,))
+    # Check if user already exists
+    cursor.execute("SELECT * FROM users WHERE name = ?", (name,))
     existing_user = cursor.fetchone()
-
+    
     if existing_user:
         conn.close()
-        return jsonify({"error": "Username already exists"}), 400
+        return jsonify({"error": "User already exists"}), 400
 
-    # Insert new user
-    cursor.execute("INSERT INTO USERS (NAME, PASSWORD) VALUES (?, ?)", (name, hashed_password))
+    # Insert new user with hashed password
+    cursor.execute("INSERT INTO users (name, password, role) VALUES (?, ?, ?)", (name, hashed_password, role))
     conn.commit()
     conn.close()
 
     return jsonify({"message": "Registration successful!"})
 
-# Admin Page Route (Protected)
+# Admin Page Route
 @app.route("/admin")
 def admin():
-    if "user" not in session:
+    if "user" not in session or session.get("role") != "admin":
         return redirect(url_for("login_page"))
     return render_template("admin.html")
+
+# Adopter Page Route
+@app.route("/adopt")
+def adopter():
+    if "user" not in session or session.get("role") != "adopter":
+        return redirect(url_for("login_page"))
+    return render_template("adopter.html")  # Create adopt.html for adopters
 
 # Logout Route
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
+    session.clear()
     return redirect(url_for("login_page"))
 
 if __name__ == "__main__":

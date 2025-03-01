@@ -16,6 +16,13 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("employeeModal").style.display = "none";
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    if (localStorage.getItem("role") !== "admin") {
+        alert("Access Denied: You are not an admin!");
+        window.location.href = "/loginAdmin"; // Redirect to login page
+    }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
     const employeeTable = document.getElementById("employeeTable");
     const addEmployeeBtn = document.getElementById("addEmployeeBtn");
@@ -142,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         alert("Logged out successfully!");
                         localStorage.removeItem("isLoggedIn");
                         sessionStorage.clear();
-                        window.location.href = "loginAdmin";
+                        window.location.href = "/loginAdmin";
                     } else {
                         alert("Logout failed. Please try again.");
                     }
@@ -158,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 document.addEventListener("DOMContentLoaded", function () {
     // Check if user is logged in
     if (!localStorage.getItem("isLoggedIn")) {
-        window.location.href = "loginAdmin"; // Redirect to login if not logged in
+        window.location.href = "/loginAdmin"; // Redirect to login if not logged in
     }
 
     // Prevent back navigation after logout
