@@ -5,60 +5,176 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard</title>
     <link rel="stylesheet" href="/assets/css/adminstyle.css">
+    <link rel="stylesheet" href="/assets/css/animations.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="dashboard">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <span> Pet Adoption</span>
+                <span>FurEver Family Admin</span>
+                <i class="fas fa-paw icon-only"></i>
             </div>
             <nav>
-                <a href="#" class="active"> Employees</a>
+                <a href="#overview" class="active">
+                    <i class="fas fa-home"></i>
+                    <span class="link-text">Dashboard</span>
+                    <span class="nav-highlight"></span>
+                </a>
+                <a href="#adoptions">
+                    <i class="fas fa-heart"></i>
+                    <span class="link-text">Adoption Records</span>
+                    <span class="nav-highlight"></span>
+                </a>
+                <a href="#applications">
+                    <i class="fas fa-file-alt"></i>
+                    <span class="link-text">Adoption Applications</span>
+                    <span class="nav-highlight"></span>
+                </a>
+                <a href="#businesses">
+                    <i class="fas fa-store"></i>
+                    <span class="link-text">Affiliated Businesses</span>
+                    <span class="nav-highlight"></span>
+                </a>
+                <a href="#pets">
+                    <i class="fas fa-dog"></i>
+                    <span class="link-text">Pet Management</span>
+                    <span class="nav-highlight"></span>
+                </a>
+                <a href="#transactions">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span class="link-text">Transactions</span>
+                    <span class="nav-highlight"></span>
+                </a>
             </nav>
-            <button class="logout" onclick="logout()"> Logout</button>
+            <button class="logout" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="link-text">Logout</span>
+            </button>
         </aside>
 
         <!-- Main Content -->
         <main class="content">
             <header>
-                <h1>Employee Management</h1>
-                <button id="addEmployeeBtn"> Add Employee</button>
+                <h1>Admin Dashboard</h1>
             </header>
 
-            <!-- Search Bar -->
-            <input type="text" id="search" placeholder="Search employees..." onkeyup="searchEmployees()">
+            <!-- Dashboard Overview -->
+            <section id="overview" class="section-enter section-enter-active">
+                <h2>Overview</h2>
+                <div class="stats">
+                    <div class="stat-box">Total Adoptions: <span id="totalAdoptions">0</span></div>
+                    <div class="stat-box">Pending Applications: <span id="pendingApplications">0</span></div>
+                    <div class="stat-box notification-pulse">Total Businesses: <span id="totalBusinesses">0</span></div>
+                    <div class="stat-box">Available Pets: <span id="totalPets">0</span></div>
+                </div>
+            </section>
 
-            <!-- Employee Table -->
-            <table>
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Role</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="employeeTable"></tbody>
-            </table>
+            <!-- Other sections -->
+            <section id="adoptions" class="section-enter">
+                <h2>Adoption Records</h2>
+                <div class="search-container">
+                    <input type="text" id="searchAdoptions" placeholder="Search adoptions..." onkeyup="searchAdoptions()">
+                    <div class="loading"></div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Adopter Name</th>
+                            <th>Pet Name</th>
+                            <th>Adoption Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adoptionTable"></tbody>
+                </table>
+            </section>
+
+            <section id="pets" class="section-enter">
+                <h2>Pet Management</h2>
+                <button id="addPetBtn">Add Pet</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Pet Name</th>
+                            <th>Age</th>
+                            <th>Sex</th>
+                            <th>Shelter</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="petTable"></tbody>
+                </table>
+                <!-- Add Pet Modal -->
+                <div id="petModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closePetModal()">&times;</span>
+                        <h2 id="modalTitle">Add Pet</h2>
+                        <form id="petForm" enctype="multipart/form-data">
+                            <input type="hidden" id="editPetId">
+                            <input type="text" id="petName" placeholder="Pet Name" required>
+                            <input type="number" id="petAge" placeholder="Age" required>
+                            <select id="petSex">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                            <input type="text" id="petShelter" placeholder="Shelter Location" required>
+                            <input type="file" id="petImage" accept="image/*">
+                            <button type="submit">Save</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add other sections similarly -->
+            <section id="applications" class="section-enter">
+                <h2>Adoption Applications</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Adopter Name</th>
+                            <th>Pet Name</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="applicationTable"></tbody>
+                </table>
+            </section>
+
+            <section id="businesses" class="section-enter">
+                <h2>Affiliated Businesses</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Business Name</th>
+                            <th>Category</th>
+                            <th>Contact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="businessTable"></tbody>
+                </table>
+            </section>
+
+            <section id="transactions" class="section-enter">
+                <h2>Transactions</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Adopter</th>
+                            <th>Business</th>
+                            <th>Amount</th>
+                            <th>Commission</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTable"></tbody>
+                </table>
+            </section>
         </main>
-    </div>
-
-    <!-- Employee Form Modal -->
-    <div id="employeeModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Add Employee</h2>
-            <form id="employeeForm">
-                <input type="hidden" id="editIndex">
-                <input type="text" id="name" placeholder="Name" required>
-                <input type="text" id="role" placeholder="Role" required>
-                <input type="email" id="email" placeholder="Email" required>
-                <input type="tel" id="phone" placeholder="Phone" required>
-                <button type="submit">Save</button>
-            </form>
-        </div>
     </div>
 
     <script src="/assets/js/admin.js"></script>

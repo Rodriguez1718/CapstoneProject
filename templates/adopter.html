@@ -3,9 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Adopter Dashboard - FurEver Family</title>
+    <link rel="stylesheet" href="/assets/css/adopterstyle.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <h1>HELOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO</h1>
+    <nav id="topbar">
+        <ul class="side-bar">
+            <li onclick=hideSidebar()><a href="#">X</a></li>
+            <li><a href="adopter.html">Home</a></li>
+            <li><a href="#adopt">Adopt a Pet</a></li>
+            <li><a href="#stores">Pet Stores</a></li>
+            <li><a href="#history">My Adoptions</a></li>
+            <li><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
+        </ul>
+        <ul>
+            <li><a href="adopter.html">FurEver Family</a></li>
+            <li class="hideOnMobile"><a href="#adopt">Adopt a Pet</a></li>
+            <li class="hideOnMobile"><a href="#stores">Pet Stores</a></li>
+            <li class="hideOnMobile"><a href="#history">My Adoptions</a></li>
+            <li class="hideOnMobile"><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
+            <li class="menu-button" onclick=showSidebar()><a href="#"><i class="fas fa-bars"></i></a></li>
+        </ul>
+    </nav>
+    <main>
+        <section id="adopt" class="spacer-adopt grid2 grid-1">
+            <div><h2>Available Pets for Adoption</h2></div>
+            <div><p>Our adoptable cats and dogs are all spayed/neutered (kapon) and vaccinated. Because they lived a difficult life before being rescued, we need to be sure that they get adopted by loving humans and won’t be subjected to further cruelty or neglect. Here’s how to apply:</p></div>
+            <div><p>Pictures of Pets</p></div>
+            <div><p>Pictures of Pets</p></div>
+        </section>
+
+        <section id="adopt" class="spacer grid grid-2">
+            <div><h2>Available Pets for Adoption</h2></div>
+            <div id="petContainer" class="pet-grid"></div>
+        </section>
+
+        <section id="stores" class="spacer">
+            <h2>Find Pet-Related Stores</h2>
+            <div id="store-list" class="grid"></div>
+        </section>
+
+        <section id="history" class="spacer">
+            <h2>My Adoption History</h2>
+            <div id="adoption-history" class="grid"></div>
+        </section>
+    </main>
+
+    <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2025 FurEver Family - All rights reserved.</p>
+                <div class="social-links">
+                    <a href="https://github.com/your-github" target="_blank">
+                        <i class="fab fa-github"></i>
+                    </a>
+                    <a href="https://facebook.com/your-page" target="_blank">
+                        <i class="fab fa-facebook"></i>
+                    </a>
+                    <a href="https://twitter.com/your-handle" target="_blank">
+                        <i class="fab fa-x-twitter"></i>
+                    </a>
+                    <a href="https://instagram.com/your-handle" target="_blank">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                </div>
+            </div>
+            <img src="/assets/image/dog1.jpg" alt="Happy pet owner with adopted dog">
+        </footer>
+    <script src="/assets/js/adopter.js"></script>
 </body>
 </html>

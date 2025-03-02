@@ -1,100 +1,273 @@
+/* General Styles */
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: 0;
     display: flex;
     height: 100vh;
+    background-color: #f4f7fc;
 }
 
 .dashboard {
     display: flex;
     width: 100%;
+    position: relative;
 }
 
+/* Sidebar */
 .sidebar {
-    width: 250px;
-    background: #2c3e50;
+    width: 60px;
+    background: #1e1e2d;
     color: white;
     display: flex;
     flex-direction: column;
     padding: 20px;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    height: 100vh;
+    transition: width 0.3s ease;
+    z-index: 1000;
 }
 
+.sidebar:hover {
+    width: 260px;
+}
+
+/* Logo styles */
 .logo {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 20px;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    position: relative;
+    overflow: hidden;
+}
+
+.logo span {
+    position: absolute;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover .logo span {
+    opacity: 1;
+    visibility: visible;
+    position: relative;
+}
+
+.icon-only {
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover .icon-only {
+    display: none;
 }
 
 nav a {
-    display: block;
+    display: flex;
+    align-items: center;
     color: white;
     text-decoration: none;
-    padding: 10px;
-    margin-bottom: 10px;
-    background: #34495e;
-    border-radius: 5px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #2a2a3a;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    white-space: nowrap;
+    position: relative;
+    justify-content: flex-start;
+    /* Changed from center */
 }
 
-nav a.active {
+nav a i {
+    width: 20px;
+    /* Fixed width for icons */
+    text-align: center;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.link-text {
+    opacity: 0;
+    visibility: hidden;
+    /* Use visibility instead of display */
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    margin-left: 10px;
+}
+
+.sidebar:hover .link-text {
+    opacity: 1;
+    visibility: visible;
+}
+
+nav a.active,
+nav a:hover {
     background: #1abc9c;
 }
 
 .logout {
     margin-top: auto;
-    background: red;
+    background: #e74c3c;
     color: white;
     border: none;
-    padding: 10px;
+    padding: 12px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* Changed from center */
 }
 
+.logout i {
+    width: 20px;
+    text-align: center;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.logout:hover {
+    background: #c0392b;
+}
+
+/* Main Content */
 .content {
     flex: 1;
-    padding: 20px;
+    padding: 30px;
+    margin-left: 100px;
+    transition: margin-left 0.3s ease;
+    width: calc(100% - 100px);
 }
 
+.sidebar:hover+.content {
+    margin-left: 300px;
+}
+
+/* Header */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
+    padding: 10px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
 }
 
+header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Buttons */
 button {
     background: #1abc9c;
     color: white;
     border: none;
-    padding: 10px;
+    padding: 12px 18px;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
+button:hover {
+    background: #16a085;
+    transform: translateY(-2px);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+/* Inputs */
 input {
-    padding: 10px;
+    padding: 12px;
     width: 100%;
     margin-bottom: 20px;
     border: 1px solid #ddd;
-    border-radius: 5px;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.3s ease;
 }
 
+input:focus {
+    border-color: #1abc9c;
+    box-shadow: 0 0 0 2px rgba(26, 188, 156, 0.2);
+    outline: none;
+}
+
+/* Table */
 table {
     width: 100%;
     border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out forwards;
 }
 
 th,
 td {
-    padding: 10px;
+    padding: 15px;
+    text-align: left;
     border-bottom: 1px solid #ddd;
+    transition: all 0.3s ease;
 }
 
-.edit {
-    background: #f1c40f;
+th {
+    background: #1e1e2d;
+    color: white;
 }
 
-.delete {
-    background: #e74c3c;
+td {
+    background: #f9f9f9;
+}
+
+tr {
+    transition: all 0.3s ease;
+}
+
+tr:hover td {
+    background: #f0f0f0;
+    transform: translateX(5px);
+}
+
+/* Stats Section */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-box {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: slideUp 0.5s ease-out forwards;
+}
+
+.stat-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* Modal Styles */
@@ -105,20 +278,31 @@ td {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.5);
     justify-content: center;
     align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal.active {
     display: flex;
+    opacity: 1;
 }
 
 .modal-content {
     background: white;
-    padding: 20px;
+    padding: 25px;
     border-radius: 10px;
-    width: 300px;
+    width: 400px;
     text-align: center;
     position: relative;
-    box-shadow: 0 40px 100px 0 rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    transform: scale(0.7);
+    transition: all 0.3s ease;
+}
+
+.modal.active .modal-content {
+    transform: scale(1);
 }
 
 .modal-content input {
@@ -131,4 +315,166 @@ td {
     cursor: pointer;
     font-size: 20px;
     position: absolute;
+    right: 15px;
+    top: 10px;
+    transition: all 0.3s ease;
+}
+
+.close:hover {
+    transform: rotate(90deg);
+    color: #e74c3c;
+}
+
+/* Keyframe Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading Animation */
+.loading {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    background: #f0f0f0;
+    overflow: hidden;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    left: -50%;
+    width: 50%;
+    height: 100%;
+    background: #1abc9c;
+    animation: loading 1s ease infinite;
+}
+
+@keyframes loading {
+    from {
+        left: -50%;
+    }
+
+    to {
+        left: 100%;
+    }
+}
+
+/* Button click animation */
+.button-click {
+    animation: clickEffect 0.3s ease;
+}
+
+@keyframes clickEffect {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(0.95);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Section transition animations */
+.section-enter {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+}
+
+.section-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Table row animation */
+.row-enter {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.row-enter-active {
+    opacity: 1;
+    transform: translateX(0);
+    transition: all 0.3s ease;
+}
+
+/* Modal animations */
+.modal-enter {
+    opacity: 0;
+    transform: scale(0.7);
+}
+
+.modal-enter-active {
+    opacity: 1;
+    transform: scale(1);
+    transition: all 0.3s ease;
+}
+
+/* Navigation highlight effect */
+.nav-highlight {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #1abc9c;
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.active .nav-highlight {
+    transform: scaleY(1);
+}
+
+/* Pulse animation for notifications */
+.notification-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(26, 188, 156, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(26, 188, 156, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(26, 188, 156, 0);
+    }
 }
