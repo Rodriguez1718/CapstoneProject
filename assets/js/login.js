@@ -1,70 +1,70 @@
+function register() {
+    // Get the values from the input fields
+    const firstname = document.getElementById('register-firstname').value;
+    const lastname = document.getElementById('register-lastname').value;
+    const phone = document.getElementById('register-phone').value;
+    const address = document.getElementById('register-address').value;
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
+    
+    // Check if all fields are filled
+    if (!firstname || !lastname || !phone || !address || !username || !password) {
+        alert("All fields are required!");
+        return;
+    }
+
+    // Create the payload to send to the server
+    const payload = {
+        firstname: firstname,
+        lastname: lastname,
+        phone: phone,
+        address: address,
+        username: username,
+        password: password
+    };
+
+    // Send a POST request to the Flask backend
+    fetch('/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Registration successful!") {
+            alert("Registration successful! You can now log in.");
+            showTab('login'); // Switch to the login tab
+        } else {
+            // Show error message if registration failed
+            document.getElementById('register-error').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error during registration:', error);
+        document.getElementById('register-error').style.display = 'block';
+    });
+}
+
 function showTab(tab) {
-    document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
-    document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+    // Switch between login and register tab
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    if (tab === 'login') {
+        loginForm.style.display = 'block';
+        registerForm.style.display = 'none';
+    } else {
+        loginForm.style.display = 'none';
+        registerForm.style.display = 'block';
+    }
 
-    let tabs = document.querySelectorAll('.tab');
-    tabs.forEach(t => t.classList.remove('active'));
-
+    // Switch tab styles
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tabElement => tabElement.classList.remove('active'));
     if (tab === 'login') {
         tabs[0].classList.add('active');
     } else {
         tabs[1].classList.add('active');
     }
-}
-
-function login() {
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
-    const errorMessage = document.getElementById('login-error');
-
-    fetch('/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: username, password: password })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                localStorage.setItem("isLoggedIn", "true");  // Store login state
-                localStorage.setItem("role", data.role);  // Store user role
-
-                if (data.role === "admin") {
-                    window.location.href = "/admin";  // Redirect to admin page
-                } else {
-                    window.location.href = "/adopt";  // Redirect to adopter page
-                }
-            } else {
-                errorMessage.style.display = "block";
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            errorMessage.style.display = "block";
-        });
-}
-
-function register() {
-    const username = document.getElementById('register-username').value;
-    const password = document.getElementById('register-password').value;
-
-    fetch('/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name: username, password: password })
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                alert('Registration successful! You can now login.');
-                showTab('login');
-            } else {
-                alert(data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred. Please try again.');
-        });
 }
