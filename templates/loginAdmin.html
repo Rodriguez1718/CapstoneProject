@@ -162,6 +162,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify(payload)
             })
                 .then(response => {
@@ -171,22 +172,21 @@
                     return response.json();
                 })
                 .then(data => {
-                    if (data.message === "Login successful!") {
-                        // Check the role, and redirect accordingly
-                        if (data.role === "adopter") {
-                            window.location.href = '/adopter';  // Redirect to the adopter's dashboard
+                        console.log(data);  // Check the server response in the console
+                        if (data.message === "Login successful!") {
+                            localStorage.setItem("role", data.role);
+                            
+                            if (data.role === "adopter") {
+                                window.location.href = '/adopter';  // Redirect to adopter's dashboard
+                            } else if (data.role === "admin") {
+                                window.location.href = '/admin';  // Redirect to admin's dashboard
+                            }
                         } else {
-                            window.location.href = '/admin';  // Redirect to the admin's dashboard
+                            document.getElementById('login-error').style.display = 'block';
                         }
-                    } else {
-                        document.getElementById('login-error').style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error during login:', error);
-                    document.getElementById('login-error').style.display = 'block';
-                });
-                        }
+                    });
+
+                                            }
         
 
 

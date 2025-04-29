@@ -1,9 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
-    if (localStorage.getItem("role") !== "admin") {
+    const role = localStorage.getItem("role");
+    if (role !== "admin") {
         alert("Access Denied: You are not an admin!");
         window.location.href = "/loginAdmin"; // Redirect to login page
     }
 });
+
 
 document.getElementById("addPetBtn").addEventListener("click", function () {
     document.getElementById("petModal").classList.add("active");

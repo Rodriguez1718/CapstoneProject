@@ -47,22 +47,23 @@ def login():
         if not username or not password:
             return jsonify({"error": "Username and password are required."}), 400
 
-        # Establish database connection
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Check if the user exists
-        cursor.execute("SELECT PASSWORD, ROLE FROM [USER] WHERE USERNAME = ?", (username,))
+        cursor.execute("SELECT PASSWORD, ROLE FROM [USER] WHERE LOWER(USERNAME) = LOWER(?)", (username,))
         row = cursor.fetchone()
         conn.close()
 
-        if row and bcrypt.check_password_hash(row[0], password):  # Check password hash
+        if row and bcrypt.check_password_hash(row[0], password):
+            session['user'] = username  # <-- ADD THIS
+            session['role'] = row[1]    # <-- ADD THIS
             return jsonify({"message": "Login successful!", "role": row[1]})
         else:
             return jsonify({"error": "Invalid username or password"}), 401
 
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 # Register API
 @app.route("/register", methods=["POST"])
@@ -168,7 +169,7 @@ def admin():
 def adopter():
     if "user" not in session or session.get("role") != "adopter":
         return redirect(url_for("login_page"))
-    return render_template("adopter.html")  # Create adopt.html for adopters
+    return render_template("adopter.html")
 
 # Logout Route
 @app.route("/logout")
