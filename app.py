@@ -20,11 +20,20 @@ def allowed_file(filename):
 def get_db_connection():
     conn = pyodbc.connect(
         "DRIVER={SQL Server};"
-        "SERVER=CCSLAB530U46;"
+        "SERVER=LAPTOP-DHGH0RSF\SQLEXPRESS;"
         "DATABASE=FUREVERFAMILY;"
         "Trusted_Connection=yes;"   
     )
     return conn
+
+def get_user_id(username):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT USER_ID FROM [USER] WHERE USERNAME = ?", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    return row.USER_ID if row else None
+
 
 # Home Route
 @app.route("/")
@@ -113,49 +122,101 @@ def add_pet():
     if "user" not in session or session["role"] != "admin":
         return jsonify({"error": "Unauthorized"}), 403
 
-    name = request.form.get("name")
-    age = request.form.get("age")
-    sex = request.form.get("sex")
-    shelter = request.form.get("shelter")
+    # Pet info
+    pet_type = request.form.get("pet_type")
+    pet_breed = request.form.get("pet_breed")
+    pet_weight = request.form.get("pet_weight")
+    pet_height = request.form.get("pet_height")
+    quantity = request.form.get("quantity")
+    
+    # Shelter info
+    shelter_address = request.form.get("shelter_address")
+    shelter_name = request.form.get("shelter_name")
+    contact_number = request.form.get("contact_number")
+    email = request.form.get("email")
+
+    # Image
     image = request.files.get("image")
 
-    if not name or not age or not sex or not shelter:
+    if not all([pet_type, pet_breed, pet_weight, pet_height, quantity, 
+                shelter_address, shelter_name, contact_number, email]):
         return jsonify({"error": "Missing required fields"}), 400
 
+    # Save image
     image_filename = None
     if image and allowed_file(image.filename):
         image_filename = secure_filename(image.filename)
         image_path = os.path.join(app.config["UPLOAD_FOLDER"], image_filename)
-        image.save(image_path)  # Save file
+        image.save(image_path)
+    else:
+        return jsonify({"error": "Invalid or missing image file"}), 400
 
-    # Insert into database (Modify query based on your schema)
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO PETS (PET_NAME, AGE, SEX, SHELTER, IMAGE) VALUES (?, ?, ?, ?, ?)", 
-                   (name, age, sex, shelter, image_filename))
-    conn.commit()
-    conn.close()
+    user_id = get_user_id(session["user"])  # Function to get USER_ID from username
 
-    return jsonify({"message": "Pet added successfully!"})
+    if user_id is None:
+        return jsonify({"error": "User not found"}), 404
 
-# Route to fetch pets
-@app.route("/pets")
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            EXEC sp_AddPetWithShelter 
+                @UserID = ?, 
+                @PetType = ?, 
+                @PetBreed = ?, 
+                @PhotoURL = ?, 
+                @PetWeight = ?, 
+                @PetHeight = ?, 
+                @Quantity = ?, 
+                @ShelterAddress = ?, 
+                @ShelterName = ?, 
+                @ContactNumber = ?, 
+                @Email = ?
+        """, (
+            user_id, pet_type, pet_breed, image_filename, pet_weight, pet_height,
+            quantity, shelter_address, shelter_name, contact_number, email
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Pet and shelter saved successfully!"})
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+# Route to fetch pets with shelter info
+@app.route("/get_pets")
 def get_pets():
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT ID, PET_NAME, AGE, SEX, SHELTER, IMAGE, STATUS FROM PETS")
-    pets = [{
-        "id": row.ID,
-        "name": row.PET_NAME,
-        "age": row.AGE,
-        "sex": row.SEX,
-        "shelter": row.SHELTER,
-        "image": f"/assets/image/{row.IMAGE}" if row.IMAGE else None,
-        "status": row.STATUS
-    } for row in cursor.fetchall()]
-    conn.close()
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Execute the stored procedure
+        cursor.execute("EXEC sp_GetPetsWithShelter")
 
-    return jsonify(pets)
+        pets = [{
+            "pet_id": row.PET_ID,
+            "user_id": row.USER_ID,
+            "pet_type": row.PET_TYPE,
+            "pet_breed": row.PET_BREED,
+            "photo_url": f"/assets/image/{row.PHOTO_URL}" if row.PHOTO_URL else None,
+            "pet_weight": float(row.PET_WEIGHT),
+            "pet_height": float(row.PET_HEIGHT),
+            "quantity": row.QUANTITY,
+            "shelter_id": row.SHELTER_ID,
+            "shelter_name": row.SHELTER_NAME,
+            "shelter_address": row.SHELTER_ADDRESS,
+            "contact_number": row.CONTACT_NUMBER,
+            "email": row.EMAIL
+        } for row in cursor.fetchall()]
+
+        conn.close()
+        return jsonify(pets)
+    
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 # Admin Page Route
 @app.route("/admin")

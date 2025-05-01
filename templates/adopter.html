@@ -10,7 +10,7 @@
 <body>
     <nav id="topbar">
         <ul class="side-bar">
-            <li onclick=hideSidebar()><a href="#">X</a></li>
+            <li onclick="hideSidebar()"><a href="#">X</a></li>
             <li><a href="adopter.html">Home</a></li>
             <li><a href="#adopt">Adopt a Pet</a></li>
             <li><a href="#stores">Pet Stores</a></li>
@@ -23,9 +23,10 @@
             <li class="hideOnMobile"><a href="#stores">Pet Stores</a></li>
             <li class="hideOnMobile"><a href="#history">My Adoptions</a></li>
             <li class="hideOnMobile"><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
-            <li class="menu-button" onclick=showSidebar()><a href="#"><i class="fas fa-bars"></i></a></li>
+            <li class="menu-button" onclick="showSidebar()"><a href="#"><i class="fas fa-bars"></i></a></li>
         </ul>
     </nav>
+
     <main>
         <section id="adopt" class="spacer-adopt grid2 grid-1">
             <div><h2>Available Pets for Adoption</h2></div>
@@ -50,26 +51,144 @@
         </section>
     </main>
 
+    <!-- Modal Structure -->
+    <div id="adoptModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Adopt this Pet</h2>
+            <p id="petDetails"></p>
+            <button id="confirmAdoptBtn">Fill the Form</button>
+        </div>
+    </div>
+
     <footer class="footer">
-            <div class="footer-content">
-                <p>&copy; 2025 FurEver Family - All rights reserved.</p>
-                <div class="social-links">
-                    <a href="https://github.com/your-github" target="_blank">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="https://facebook.com/your-page" target="_blank">
-                        <i class="fab fa-facebook"></i>
-                    </a>
-                    <a href="https://twitter.com/your-handle" target="_blank">
-                        <i class="fab fa-x-twitter"></i>
-                    </a>
-                    <a href="https://instagram.com/your-handle" target="_blank">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                </div>
+        <div class="footer-content">
+            <p>&copy; 2025 FurEver Family - All rights reserved.</p>
+            <div class="social-links">
+                <a href="https://github.com/your-github" target="_blank">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://facebook.com/your-page" target="_blank">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                <a href="https://twitter.com/your-handle" target="_blank">
+                    <i class="fab fa-x-twitter"></i>
+                </a>
+                <a href="https://instagram.com/your-handle" target="_blank">
+                    <i class="fab fa-instagram"></i>
+                </a>
             </div>
-            <img src="/assets/image/dog1.jpg" alt="Happy pet owner with adopted dog">
-        </footer>
-    <script src="/assets/js/adopter.js"></script>
+        </div>
+        <img src="/assets/image/dog1.jpg" alt="Happy pet owner with adopted dog">
+    </footer>
+
+    <script>
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                fetch('/logout', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Logged out successfully!");
+                        localStorage.removeItem("isLoggedIn");
+                        localStorage.removeItem("role");
+                        window.location.href = "/loginAdmin";
+                    } else {
+                        alert("Logout failed. Please try again.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred. Please try again.");
+                });
+            }
+        }
+
+        function fetchPets() {
+    fetch("/get_pets")
+        .then(response => response.json())
+        .then(data => {
+            const petContainer = document.getElementById("petContainer");
+            petContainer.innerHTML = data.map(pet => `
+                <div class="pet-card">
+                    <img src="${pet.photo_url || '/assets/default-pet.jpg'}" alt="Pet Image">
+                    <h3>${encodeHTML(pet.pet_breed) || "Unnamed Pet"}</h3>
+                    <p><strong>Height:</strong> ${pet.pet_height || "Unknown"}</p>
+                    <p><strong>Weight:</strong> ${pet.pet_weight || "Unknown"}</p>
+                    <p><strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}</p>
+                    <p><strong>Available:</strong> ${pet.quantity || "Available"}</p>
+                    <button class="adopt-btn">Adopt</button>
+                </div>
+            `).join("");
+
+            // Attach event listener to the "Adopt" button
+            const adoptButtons = document.querySelectorAll(".adopt-btn");
+            adoptButtons.forEach((button, index) => {
+                button.addEventListener("click", () => openAdoptModal(data[index])); // Use index to fetch the pet
+            });
+        })
+        .catch(error => console.error("Error fetching pets:", error));
+}
+
+
+        // Function to prevent XSS attacks
+        function encodeHTML(str) {
+            return str ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+        }
+
+        // Modal Functions
+        let currentPet = null;
+
+        // Function to open the modal
+        function openAdoptModal(pet) {
+    console.log("Adopt button clicked for pet:", pet); // This will log when the "Adopt" button is clicked
+    currentPet = pet; // Store the pet object for later use
+    const petDetails = document.getElementById('petDetails');
+    petDetails.innerHTML = `
+        <strong>Breed:</strong> ${encodeHTML(pet.pet_breed)}<br>
+        <strong>Height:</strong> ${pet.pet_height || "Unknown"}<br>
+        <strong>Weight:</strong> ${pet.pet_weight || "Unknown"}<br>
+        <strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}<br>
+        <strong>Available:</strong> ${pet.quantity || "Available"}<br>
+    `;
+    const modal = document.getElementById('adoptModal');
+    modal.style.display = "block"; // Open the modal
+}
+
+
+
+        // Function to close the modal
+        function closeAdoptModal() {
+            const modal = document.getElementById('adoptModal');
+            modal.style.display = "none";
+        }
+
+        // Event listener for the close button in the modal
+        document.querySelector('.close-btn').addEventListener('click', closeAdoptModal);
+                window.addEventListener('click', function(event) {
+            const modal = document.getElementById('adoptModal');
+            if (event.target === modal) {
+                closeAdoptModal();
+            }
+        });
+
+
+
+        // Handle the adoption confirmation
+        document.getElementById('confirmAdoptBtn').addEventListener('click', function() {
+            if (currentPet) {
+                alert(`You have adopted ${currentPet.pet_breed}!`);
+                // Add your adoption logic here (e.g., make a request to the server)
+                closeAdoptModal();
+            }
+        });
+
+        // Fetch pets data when the page loads
+        document.addEventListener("DOMContentLoaded", fetchPets);
+    </script>
 </body>
 </html>
