@@ -212,6 +212,124 @@ BEGIN
         S.EMAIL
     FROM PET P
     INNER JOIN PET_SHELTER S ON P.SHELTER_ID = S.SHELTER_ID
-    ORDER BY P.PET_ID DESC; -- Optional: Order by most recent
+    LEFT JOIN ADOPTION A ON A.PET_ID = P.PET_ID
+    LEFT JOIN EVALUATION E ON A.ADOPTION_ID = E.ADOPTION_ID
+    WHERE E.EVALUATION_STATUS IS NULL OR E.EVALUATION_STATUS = 'Pending' OR E.EVALUATION_STATUS = 'Rejected'
+    ORDER BY P.PET_ID DESC;
+END
+
+
+CREATE PROCEDURE sp_ApplyForAdoptionWithDetails
+    @PET_ID INT,
+    @USER_ID INT,
+    @NO_ADOPTION INT,
+    @PICKUP_DATE DATE,
+    @ADOPTION_INCOME MONEY,
+    @ADOPTION_HISTORY TEXT,
+    @BEHAVIORAL_ASSESS TEXT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Insert into ADOPTION table
+    INSERT INTO ADOPTION (
+        PET_ID,
+        [USER_ID],
+        NO_ADOPTION,
+        PICKUP_DATE
+    )
+    VALUES (
+        @PET_ID,
+        @USER_ID,
+        @NO_ADOPTION,
+        @PICKUP_DATE
+    );
+
+    -- Get the ID of the newly inserted ADOPTION record
+    DECLARE @NewAdoptionID INT = SCOPE_IDENTITY();
+
+    -- Insert into EVALUATION table with provided evaluation details
+    INSERT INTO EVALUATION (
+        [USER_ID],
+        ADOPTION_ID,
+        EVALUATION_STATUS,
+        ADOPTION_INCOME,
+        ADOPTION_HISTORY,
+        BEHAVIORAL_ASSESS,
+        EVALUATION_DATE
+    )
+    VALUES (
+        @USER_ID,
+        @NewAdoptionID,
+        'Pending',  -- You can modify the status as needed
+        @ADOPTION_INCOME,
+        @ADOPTION_HISTORY,
+        @BEHAVIORAL_ASSESS,
+        GETDATE()
+    );
+END;
+
+
+CREATE PROCEDURE sp_GetAdoptionApplications
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT 
+        eva.EVALUATION_ID,
+        eva.EVALUATION_STATUS,
+        eva.ADOPTION_INCOME,
+        eva.ADOPTION_HISTORY,
+        eva.BEHAVIORAL_ASSESS,
+        eva.EVALUATION_DATE,
+
+        a.ADOPTION_ID,
+        a.NO_ADOPTION,
+        a.PICKUP_DATE,
+        a.ADOPTION_DATE,
+
+        p.PET_ID,
+        p.PET_BREED,
+        p.PHOTO_URL,
+
+        ps.SHELTER_NAME,
+        ps.[ADDRESS]     AS SHELTER_ADDRESS,
+
+        reg.FIRSTNAME,
+        reg.LASTNAME,
+
+        u.[USER_ID]
+
+    FROM EVALUATION eva
+    INNER JOIN ADOPTION a       ON eva.ADOPTION_ID = a.ADOPTION_ID
+    INNER JOIN PET p            ON a.PET_ID        = p.PET_ID
+    INNER JOIN PET_SHELTER ps   ON p.SHELTER_ID    = ps.SHELTER_ID
+    INNER JOIN [USER] u         ON eva.[USER_ID]     = u.[USER_ID]
+    INNER JOIN REGISTER reg     ON u.REGISTER_ID   = reg.REGISTER_ID
+
+    ORDER BY eva.EVALUATION_DATE DESC;
+END;
+
+
+CREATE PROCEDURE sp_ApproveAdoptionApplication
+    @EvaluationID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE EVALUATION
+    SET EVALUATION_STATUS = 'Approved'
+    WHERE EVALUATION_ID = @EvaluationID;
+END;
+
+CREATE PROCEDURE sp_RejectAdoptionApplication
+    @EvaluationID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE EVALUATION
+    SET EVALUATION_STATUS = 'Rejected'
+    WHERE EVALUATION_ID = @EvaluationID;
 END;
 
