@@ -191,31 +191,175 @@ def get_pets():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Execute the stored procedure
         cursor.execute("EXEC sp_GetPetsWithShelter")
 
-        pets = [{
+        pets = []
+        for row in cursor.fetchall():
+            pets.append({
+                "pet_id": row.PET_ID,
+                "user_id": row.USER_ID,
+                "pet_type": row.PET_TYPE,
+                "pet_breed": row.PET_BREED,
+                "photo_url": f"/assets/image/{row.PHOTO_URL}" if row.PHOTO_URL else "/assets/default-pet.jpg",
+                "pet_weight": float(row.PET_WEIGHT) if row.PET_WEIGHT is not None else None,
+                "pet_height": float(row.PET_HEIGHT) if row.PET_HEIGHT is not None else None,
+                "quantity": row.QUANTITY,
+                "shelter_id": row.SHELTER_ID,
+                "shelter_name": row.SHELTER_NAME,
+                "shelter_address": row.SHELTER_ADDRESS,
+                "contact_number": row.CONTACT_NUMBER,
+                "email": row.EMAIL
+            })
+
+        cursor.close()
+        conn.close()
+        return jsonify(pets)
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+# Route to apply for adoption
+@app.route("/application", methods=["POST"])
+def application():
+    if "user" not in session or session.get("role") != "adopter":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # Get adopter's information from the request
+    data = request.json
+
+    pet_id = data.get("pet_id")
+    no_adoption = data.get("no_adoption")
+    pickup_date = data.get("pickup_date")
+    adoption_income = data.get("adoption_income")
+    adoption_history = data.get("adoption_history")
+    behavioral_assess = data.get("behavioral_assess")
+
+    # Validate required fields
+    if not all([pet_id, no_adoption, pickup_date, adoption_income, adoption_history, behavioral_assess]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Get adopter's user_id
+    user_id = get_user_id(session["user"])
+    if not user_id:
+        return jsonify({"error": "User not found"}), 404
+
+    try:
+        # Connect to database
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Execute stored procedure for adoption application
+        cursor.execute("""
+            EXEC sp_ApplyForAdoptionWithDetails 
+                @PET_ID = ?, 
+                @USER_ID = ?, 
+                @NO_ADOPTION = ?, 
+                @PICKUP_DATE = ?, 
+                @ADOPTION_INCOME = ?, 
+                @ADOPTION_HISTORY = ?, 
+                @BEHAVIORAL_ASSESS = ?
+        """, (
+            pet_id, user_id, no_adoption, pickup_date, adoption_income, 
+            adoption_history, behavioral_assess
+        ))
+
+        # Commit and close connection
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Adoption application submitted successfully!"})
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+# Route to get adoption applications with pet photo and application form
+@app.route("/get_adoption_applications", methods=["GET"])
+def get_adoption_applications():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Execute the stored procedure
+        cursor.execute("EXEC sp_GetAdoptionApplications")
+
+        # Fetch the results and map them to a dictionary
+        applications = [{
+            "evaluation_id": row.EVALUATION_ID,
+            "evaluation_status": row.EVALUATION_STATUS,
+            "adoption_income": row.ADOPTION_INCOME,
+            "adoption_history": row.ADOPTION_HISTORY,
+            "behavioral_assess": row.BEHAVIORAL_ASSESS,
+            "evaluation_date": row.EVALUATION_DATE,
+
+            "adoption_id": row.ADOPTION_ID,
+            "no_adoption": row.NO_ADOPTION,
+            "pickup_date": row.PICKUP_DATE,
+            "adoption_date": row.ADOPTION_DATE,
+
             "pet_id": row.PET_ID,
-            "user_id": row.USER_ID,
-            "pet_type": row.PET_TYPE,
             "pet_breed": row.PET_BREED,
             "photo_url": f"/assets/image/{row.PHOTO_URL}" if row.PHOTO_URL else None,
-            "pet_weight": float(row.PET_WEIGHT),
-            "pet_height": float(row.PET_HEIGHT),
-            "quantity": row.QUANTITY,
-            "shelter_id": row.SHELTER_ID,
+
             "shelter_name": row.SHELTER_NAME,
             "shelter_address": row.SHELTER_ADDRESS,
-            "contact_number": row.CONTACT_NUMBER,
-            "email": row.EMAIL
+
+            "adopter_firstname": row.FIRSTNAME,
+            "adopter_lastname": row.LASTNAME,
+
+            "user_id": row.USER_ID
         } for row in cursor.fetchall()]
 
         conn.close()
-        return jsonify(pets)
-    
+        return jsonify(applications), 200
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": f"Failed to fetch data: {str(e)}"}), 500
+
+@app.route("/approve_application/<int:evaluation_id>", methods=["POST"])
+def approve_application(evaluation_id):
+    if "user" not in session or session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Execute the stored procedure to approve the application
+        cursor.execute("EXEC sp_ApproveAdoptionApplication @EvaluationID = ?", (evaluation_id,))
+        
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Application approved successfully!"}), 200
+
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    
+    
+    
+@app.route("/reject_application/<int:evaluation_id>", methods=["POST"])
+def reject_application(evaluation_id):
+    if "user" not in session or session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Execute the stored procedure to approve the application
+        cursor.execute("EXEC sp_RejectAdoptionApplication @EvaluationID = ?", (evaluation_id,))
+        
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Rejected!"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
 
 # Admin Page Route
@@ -224,6 +368,7 @@ def admin():
     if "user" not in session or session.get("role") != "admin":
         return redirect(url_for("login_page"))
     return render_template("admin.html")
+
 
 # Adopter Page Route
 @app.route("/adopter")

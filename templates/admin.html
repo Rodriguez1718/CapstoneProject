@@ -80,17 +80,14 @@
                         <form id="petForm" enctype="multipart/form-data">
                             <input type="text" id="petType" placeholder="Pet Type (e.g., Dog, Cat)" required>
                             <input type="text" id="petBreed" placeholder="Breed" required>
-                            <input type="text" id="petWeight" placeholder="Weight (kg)" required>
-                            <input type="text" id="petHeight" placeholder="Height (cm)" required>
+                            <input type="number" id="petWeight" placeholder="Weight (kg)" required>
+                            <input type="number" id="petHeight" placeholder="Height (cm)" required>
                             <input type="number" id="petQuantity" placeholder="Quantity" required>
-
                             <input type="text" id="shelterAddress" placeholder="Shelter Address" required>
                             <input type="text" id="shelterName" placeholder="Shelter Name" required>
                             <input type="text" id="contactNumber" placeholder="Contact Number" required>
                             <input type="email" id="shelterEmail" placeholder="Shelter Email" required>
-
                             <input type="file" id="petImage" accept="image/*" required>
-
                             <button type="submit">Save</button>
                         </form>
                     </div>
@@ -106,6 +103,19 @@
                     </thead>
                     <tbody id="applicationTable"></tbody>
                 </table>
+
+                <div id="applicationModal" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeApplicationModal()">&times;</span>
+                        <h2>Application Details</h2>
+                        <div id="applicationDetails"></div>
+                        <div style="margin-top: 20px;">
+                            <button id="approveBtn" style="background-color: green; color: white; padding: 8px 16px; border: none; cursor: pointer;">Approve</button>
+                        </div>
+                    </div>
+                </div>
+                
+                
             </section>
 
             <!-- Businesses -->
@@ -151,64 +161,53 @@
         function closePetModal() {
             document.getElementById("petModal").classList.remove("active");
         }
-        // hide when clicking outside content
+
         window.addEventListener("click", e => {
             const modal = document.getElementById("petModal");
             if (e.target === modal) closePetModal();
         });
 
-        // Fetch and display pets in the "Pet Management" table
-    function fetchPets() {
-        fetch("/get_pets")
-            .then(response => response.json())
-            .then(pets => {
-                const table = document.getElementById("petTable");
-                table.innerHTML = ""; // Clear previous rows
-
-                pets.forEach(pet => {
-                    const row = document.createElement("tr");
-
-                    row.innerHTML = `
-                        <td><img src="${pet.photo_url || '/assets/image/default.png'}" alt="Pet Image" width="60" height="60" style="object-fit: cover; border-radius: 8px;"></td>
-                        <td>${pet.pet_breed}</td>
-                        <td>${pet.pet_weight}</td>
-                        <td>${pet.pet_height}</td>
-                        <td>${pet.shelter_name}</td>
-                        <td>${pet.quantity}</td>
-                        <td>
-                            <button onclick="editPet(${pet.pet_id})">Edit</button>
-                            <button onclick="deletePet(${pet.pet_id})">Delete</button>
-                        </td>
-                    `;
-
-                    table.appendChild(row);
+        // Fetch pets
+        function fetchPets() {
+            fetch("/get_pets")
+                .then(response => response.json())
+                .then(pets => {
+                    const table = document.getElementById("petTable");
+                    table.innerHTML = "";
+                    pets.forEach(pet => {
+                        const row = document.createElement("tr");
+                        row.innerHTML = `
+                            <td><img src="${pet.photo_url || '/assets/image/default.png'}" width="60" height="60" style="object-fit: cover; border-radius: 8px;"></td>
+                            <td>${pet.pet_breed}</td>
+                            <td>${pet.pet_weight}</td>
+                            <td>${pet.pet_height}</td>
+                            <td>${pet.shelter_name}</td>
+                            <td>${pet.quantity}</td>
+                            <td>
+                                <button onclick="editPet(${pet.pet_id})">Edit</button>
+                                <button onclick="deletePet(${pet.pet_id})">Delete</button>
+                            </td>
+                        `;
+                        table.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error("Error fetching pets:", error);
+                    alert("Failed to load pets.");
                 });
-            })
-            .catch(error => {
-                console.error("Error fetching pets:", error);
-                alert("Failed to load pets.");
-            });
-    }
-
-    function editPet(petId) {
-        alert(`Edit pet with ID: ${petId}`);
-        // Add modal population logic here
-    }
-
-    function deletePet(petId) {
-        if (confirm("Are you sure you want to delete this pet?")) {
-            alert(`Delete logic for pet ID: ${petId}`);
-            // Call DELETE endpoint here (if implemented)
         }
-    }
 
-    // Call fetchPets after page loads
-    window.addEventListener("load", () => {
-        fetchPets();
-    });
-        
+        function editPet(petId) {
+            alert(`Edit pet with ID: ${petId}`);
+        }
 
-        // Handle Pet form
+        function deletePet(petId) {
+            if (confirm("Are you sure you want to delete this pet?")) {
+                alert(`Delete logic for pet ID: ${petId}`);
+            }
+        }
+
+        // Submit Pet Form
         document.getElementById("petForm").addEventListener("submit", function (event) {
             event.preventDefault();
             const formData = new FormData();
@@ -221,11 +220,8 @@
             formData.append("shelter_name", document.getElementById("shelterName").value);
             formData.append("contact_number", document.getElementById("contactNumber").value);
             formData.append("email", document.getElementById("shelterEmail").value);
-
             const petImage = document.getElementById("petImage").files[0];
-            if (petImage) {
-                formData.append("image", petImage);
-            }
+            if (petImage) formData.append("image", petImage);
 
             fetch("/add_pet", {
                 method: "POST",
@@ -236,7 +232,7 @@
                 if (data.message) {
                     alert(data.message);
                     closePetModal();
-                    fetchPets(); // Optional refresh
+                    fetchPets();
                 } else {
                     alert(data.error || "Failed to add pet.");
                 }
@@ -246,6 +242,111 @@
                 alert("An unexpected error occurred.");
             });
         });
+
+// Fetch Adoption Applications
+function fetchApplications() {
+    fetch("/get_adoption_applications")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Server error: " + response.status);
+            }
+            return response.json();
+        })
+        .then(applications => {
+            const table = document.getElementById("applicationTable");
+            table.innerHTML = "";
+
+            // Check if applications is an array
+            if (!Array.isArray(applications)) {
+                throw new Error("Unexpected data format");
+            }
+            const pendingApps = applications.filter(app => app.evaluation_status === "Pending");
+
+
+            pendingApps.forEach(app => {
+                const row = document.createElement("tr");
+
+                // Use safe default values in case the fields are null or undefined
+                const adopterName = `${app.adopter_firstname || "N/A"} ${app.adopter_lastname || "N/A"}`;
+                const petName = app.pet_breed || "N/A";
+                const status = app.evaluation_status || "Pending";
+
+                row.innerHTML = `
+                    <td>${adopterName}</td>
+                    <td>${petName}</td>
+                    <td>${status}</td>
+                    <td>
+                <button onclick='viewApplicationDetails(${JSON.stringify(app)})'>View</button>
+                <button onclick="rejectApplication(${app.evaluation_id})">Reject</button>
+
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching applications:", error);
+            alert("Failed to load applications.");
+        });
+}
+
+
+        function approveApplication(evaluationId) {
+            fetch(`/approve_application/${evaluationId}`, { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message || "Application approved.");
+                    fetchApplications();
+                })
+                .catch(error => {
+                    console.error("Error approving application:", error);
+                    alert("Approval failed.");
+                });
+        }
+
+        function rejectApplication(evaluation_id) {
+            fetch(`/reject_application/${evaluation_id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+            })
+            .then(r => r.json())
+            .then(data => {
+            alert(data.message || data.error || "Rejected!");
+            fetchApplications();
+            })
+            .catch(e => {
+            console.error("Error rejecting application:", e);
+            alert("Rejection failed.");
+            });
+        }
+
+        function viewApplicationDetails(app) {
+            document.getElementById("applicationDetails").innerHTML = `
+                <p><strong>Name:</strong> ${app.adopter_firstname} ${app.adopter_lastname}</p>
+                <p><strong>Pet Breed:</strong> ${app.pet_breed}</p>
+                <p><strong>Shelter:</strong> ${app.shelter_name}, ${app.shelter_address}</p>
+                <p><strong>Pickup Date:</strong> ${app.pickup_date}</p>
+                <p><strong>Income:</strong> ${app.adoption_income}</p>
+                <p><strong>Adoption History:</strong> ${app.adoption_history}</p>
+                <p><strong>Behavioral Assessment:</strong> ${app.behavioral_assess}</p>
+                <p><strong>Status:</strong> ${app.evaluation_status}</p>
+                <img src="${app.photo_url}" alt="Pet" style="width: 150px; margin-top: 10px;">
+            `;
+
+    // Set the approve button's onclick to approve this specific application
+    const approveBtn = document.getElementById("approveBtn");
+    approveBtn.onclick = () => {
+        approveApplication(app.evaluation_id);
+        closeApplicationModal();
+    };
+
+    document.getElementById("applicationModal").classList.add("active");
+}
+
+        function closeApplicationModal() {
+             document.getElementById("applicationModal").classList.remove("active");
+                }
+
 
         // Section switching
         const navLinks = document.querySelectorAll("aside nav a");
@@ -259,10 +360,16 @@
             navLinks.forEach(link => {
                 link.classList.toggle("active", link.getAttribute("href") === hash);
             });
+
+            if (hash === "#pets") fetchPets();
+            if (hash === "#applications") fetchApplications();
         }
 
         window.addEventListener("hashchange", showSectionFromHash);
-        window.addEventListener("load", showSectionFromHash);
+        window.addEventListener("load", () => {
+            showSectionFromHash();
+            fetchPets();
+        });
     </script>
-</body>
+</body> 
 </html>
