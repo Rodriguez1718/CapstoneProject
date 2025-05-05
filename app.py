@@ -20,8 +20,8 @@ def allowed_file(filename):
 def get_db_connection():
     conn = pyodbc.connect(
         "DRIVER={SQL Server};"
-        "SERVER=CCSLAB530U46;"
-        "DATABASE=FUREVER;"
+        "SERVER=LAPTOP-DHGH0RSF\SQLEXPRESS;"
+        "DATABASE=FUREVERFAMILY;"
         "Trusted_Connection=yes;"   
     )
     return conn
@@ -371,7 +371,7 @@ def admin():
 
 
 @app.route("/adoption_history")
-def admin():
+def adoption_history():
     if "user" not in session or session.get("role") != "adopter":
         return redirect(url_for("login_page"))
     return render_template("adoption_history.html")

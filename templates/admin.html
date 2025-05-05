@@ -7,6 +7,12 @@
     <link rel="stylesheet" href="/assets/css/adminstyle.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+
+
 </head>
 <body>
     <div class="dashboard">
@@ -44,6 +50,8 @@
                     <div class="stat-box notification-pulse">Total Businesses: <span id="totalBusinesses">0</span></div>
                     <div class="stat-box">Available Pets: <span id="totalPets">0</span></div>
                 </div>
+                <div id="pieChart" style="width: 100%; height: 100%; margin-top: 50px; margin-bottom: 100px; display: flex; justify-content: center; align-items: center;"></div>
+                
             </section>
 
             <!-- Adoptions -->
@@ -55,7 +63,7 @@
                 </div>
                 <table>
                     <thead>
-                        <tr><th>Adopter Name</th><th>Pet Breed</th><th>Adoption Date</th></tr>
+                        <tr><th>Adopter Name</th><th>Pet Breed</th><th>Status</th><th>Adoption Date</th></tr>
                     </thead>
                     <tbody id="adoptionTable"></tbody>
                 </table>
@@ -163,6 +171,36 @@
             window.location.replace('/loginAdmin');
         }
 
+        window.onload = function () {
+        fetchApprovedApplications();
+        fetchApplications(); 
+        showSectionFromHash();
+        fetchPets();
+    };
+
+
+    function renderPlotlyPieChart(totalPetsCount, pendingCount, approvedCount) {
+    const data = [{
+        values: [totalPetsCount, pendingCount, approvedCount],
+        labels: ['Available Pets', 'Pending Applications', 'Approved Adoptions'],
+        type: 'pie',
+        marker: {
+            colors: ['#36A2EB', '#FFCE56', '#4CAF50']
+        }
+    }];
+    
+    const layout = {
+        title: "Adoption Overview",
+        height: 400,
+        width: 500,
+        showlegend: true,
+    };
+
+    // Plot the pie chart into the 'pieChart' div
+    Plotly.newPlot('pieChart', data, layout);
+}
+
+
         function logout() {
             localStorage.removeItem('role');
             sessionStorage.clear();
@@ -182,35 +220,62 @@
             if (e.target === modal) closePetModal();
         });
 
+        function showSectionFromHash() {
+    const hash = window.location.hash || "#overview";
+    sections.forEach(section => {
+        section.classList.toggle("section-enter-active", "#" + section.id === hash);
+    });
+    navLinks.forEach(link => {
+        link.classList.toggle("active", link.getAttribute("href") === hash);
+    });
+
+    if (hash === "#pets") fetchPets();
+    if (hash === "#applications") fetchApplications();
+    if (hash === "#adoptions") fetchApprovedApplications(); // ✅ Add this line
+}
+
+
         // Fetch pets
         function fetchPets() {
-            fetch("/get_pets")
-                .then(response => response.json())
-                .then(pets => {
-                    const table = document.getElementById("petTable");
-                    table.innerHTML = "";
-                    pets.forEach(pet => {
-                        const row = document.createElement("tr");
-                        row.innerHTML = `
-                            <td><img src="${pet.photo_url || '/assets/image/default.png'}" width="60" height="60" style="object-fit: cover; border-radius: 8px;"></td>
-                            <td>${pet.pet_breed}</td>
-                            <td>${pet.pet_weight}</td>
-                            <td>${pet.pet_height}</td>
-                            <td>${pet.shelter_name}</td>
-                            <td>${pet.quantity}</td>
-                            <td>
-                                <button onclick="editPet(${pet.pet_id})">Edit</button>
-                                <button onclick="deletePet(${pet.pet_id})">Delete</button>
-                            </td>
-                        `;
-                        table.appendChild(row);
-                    });
-                })
-                .catch(error => {
-                    console.error("Error fetching pets:", error);
-                    alert("Failed to load pets.");
-                });
-        }
+    fetch("/get_pets")
+        .then(response => response.json())
+        .then(pets => {
+            const table = document.getElementById("petTable");
+            table.innerHTML = "";
+
+            let total = 0;
+
+            pets.forEach(pet => {
+                total += parseInt(pet.quantity) || 0;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td><img src="${pet.photo_url || '/assets/image/default.png'}" width="60" height="60" style="object-fit: cover; border-radius: 8px;"></td>
+                    <td>${pet.pet_breed}</td>
+                    <td>${pet.pet_weight}</td>
+                    <td>${pet.pet_height}</td>
+                    <td>${pet.shelter_name}</td>
+                    <td>${pet.quantity}</td>
+                    <td>
+                        <button onclick="editPet(${pet.pet_id})">Edit</button>
+                        <button onclick="deletePet(${pet.pet_id})">Delete</button>
+                    </td>
+                `;
+                table.appendChild(row);
+            });
+
+            // Update the dashboard count
+            document.getElementById("totalPets").textContent = total;
+            window.totalPetsCount = total; // store globally for chart
+// After fetching totalPetsCount, pendingCount, and approvedCount, call:
+renderPlotlyPieChart(window.totalPetsCount || 0, window.pendingCount || 0, window.approvedCount || 0);
+})
+        .catch(error => {
+            console.error("Error fetching pets:", error);
+            alert("Failed to load pets.");
+        });
+}
+
 
         function editPet(petId) {
             alert(`Edit pet with ID: ${petId}`);
@@ -301,17 +366,20 @@ function fetchApplications() {
             const table = document.getElementById("applicationTable");
             table.innerHTML = "";
 
-            // Check if applications is an array
             if (!Array.isArray(applications)) {
                 throw new Error("Unexpected data format");
             }
+
             const pendingApps = applications.filter(app => app.evaluation_status === "Pending");
 
+            // ✅ Update the dashboard count
+            document.getElementById("pendingApplications").textContent = pendingApps.length;
+            window.pendingCount = pendingApps.length;
+// After fetching totalPetsCount, pendingCount, and approvedCount, call:
+renderPlotlyPieChart(window.totalPetsCount || 0, window.pendingCount || 0, window.approvedCount || 0);
 
             pendingApps.forEach(app => {
                 const row = document.createElement("tr");
-
-                // Use safe default values in case the fields are null or undefined
                 const adopterName = `${app.adopter_firstname || "N/A"} ${app.adopter_lastname || "N/A"}`;
                 const petName = app.pet_breed || "N/A";
                 const status = app.evaluation_status || "Pending";
@@ -321,9 +389,8 @@ function fetchApplications() {
                     <td>${petName}</td>
                     <td>${status}</td>
                     <td>
-                <button onclick='viewApplicationDetails(${JSON.stringify(app)})'>View</button>
-                <button onclick="rejectApplication(${app.evaluation_id})">Reject</button>
-
+                        <button onclick='viewApplicationDetails(${JSON.stringify(app)})'>View</button>
+                        <button onclick="rejectApplication(${app.evaluation_id})">Reject</button>
                     </td>
                 `;
                 table.appendChild(row);
@@ -339,34 +406,36 @@ function fetchApplications() {
 function fetchApprovedApplications() {
     fetch("/get_adoption_applications")
         .then(response => {
-            if (!response.ok) {
-                throw new Error("Server error: " + response.status);
-            }
+            if (!response.ok) throw new Error("Server error: " + response.status);
             return response.json();
         })
         .then(adoptions => {
             const table = document.getElementById("adoptionTable");
             table.innerHTML = "";
 
-            // Check if applications is an array
-            if (!Array.isArray(adoptions)) {
-                throw new Error("Unexpected data format");
-            }
-            const pendingApps = adoptions.filter(app => app.evaluation_status === "Approved");
+            if (!Array.isArray(adoptions)) throw new Error("Unexpected data format");
+
+            const approvedApps = adoptions.filter(app => app.evaluation_status === "Approved");
+
+            // ✅ Update the dashboard count
+            document.getElementById("totalAdoptions").textContent = approvedApps.length;
+            window.approvedCount = approvedApps.length;
+// After fetching totalPetsCount, pendingCount, and approvedCount, call:
+renderPlotlyPieChart(window.totalPetsCount || 0, window.pendingCount || 0, window.approvedCount || 0);
 
 
-            pendingApps.forEach(app => {
+            approvedApps.forEach(app => {
                 const row = document.createElement("tr");
-
-                // Use safe default values in case the fields are null or undefined
                 const adopterName = `${app.adopter_firstname || "N/A"} ${app.adopter_lastname || "N/A"}`;
-                const petName = app.pet_breed || "N/A";
+                const petBreed = app.pet_breed || "N/A";
                 const status = app.evaluation_status || "Approved";
+                const date = app.adoption_date || "N/A";
 
                 row.innerHTML = `
                     <td>${adopterName}</td>
-                    <td>${petName}</td>
+                    <td>${petBreed}</td>
                     <td>${status}</td>
+                    <td>${date}</td>
                 `;
                 table.appendChild(row);
             });
