@@ -26,6 +26,8 @@ function logout() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    
+
     loadStores();
 
     // Handle sidebar show/hide

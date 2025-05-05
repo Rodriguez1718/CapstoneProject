@@ -10,7 +10,7 @@
 <body>
     <nav id="topbar">
         <ul class="side-bar">
-            <li onclick=hideSidebar()><a href="#">X</a></li>
+            <li onclick="hideSidebar()"><a href="#">X</a></li>
             <li><a href="adopter.html">Home</a></li>
             <li><a href="#adopt">Adopt a Pet</a></li>
             <li><a href="#stores">Pet Stores</a></li>
@@ -23,9 +23,10 @@
             <li class="hideOnMobile"><a href="#stores">Pet Stores</a></li>
             <li class="hideOnMobile"><a href="#history">My Adoptions</a></li>
             <li class="hideOnMobile"><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
-            <li class="menu-button" onclick=showSidebar()><a href="#"><i class="fas fa-bars"></i></a></li>
+            <li class="menu-button" onclick="showSidebar()"><a href="#"><i class="fas fa-bars"></i></a></li>
         </ul>
     </nav>
+
     <main>
         <section id="adopt" class="spacer-adopt grid2 grid-1">
             <div><h2>Available Pets for Adoption</h2></div>
@@ -38,38 +39,225 @@
             <div><h2>Available Pets for Adoption</h2></div>
             <div id="petContainer" class="pet-grid"></div>
         </section>
-
-        <section id="stores" class="spacer">
-            <h2>Find Pet-Related Stores</h2>
-            <div id="store-list" class="grid"></div>
-        </section>
-
+        
         <section id="history" class="spacer">
             <h2>My Adoption History</h2>
             <div id="adoption-history" class="grid"></div>
         </section>
     </main>
 
+    <!-- Pet Details Modal -->
+    <div id="adoptModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Adopt this Pet</h2>
+            <p id="petDetails"></p>
+            <button id="confirmAdoptBtn">Proceed to Application</button>
+        </div>
+    </div>
+
+    <!-- Application Form Modal -->
+    <div id="applicationModal" class="modal">
+        <div class="modal-content">
+            <span class="close-app-btn">&times;</span>
+            <h2>Adoption Application Form</h2>
+            <form id="adoptionForm">
+                <!-- Hidden field for Pet ID -->
+                <input type="hidden" id="petId" name="petId">
+                
+                <label for="noAdoption">Number of Adoptions You Have Done:</label>
+                <br>
+                <input type="number" id="noAdoption" name="noAdoption" required>
+                <br>
+
+                <label for="pickupDate">Preferred Pickup Date:</label>
+                <br>
+                <input type="date" id="pickupDate" name="pickupDate" required>
+                <br>
+
+                <label for="adoptionIncome">Your Income:</label>
+                <br>
+                <input type="number" id="adoptionIncome" name="adoptionIncome" required>
+                <br>
+
+                <label for="adoptionHistory">Adoption History:</label>
+                <br>
+                <textarea id="adoptionHistory" name="adoptionHistory" required></textarea>
+                <br>
+
+                <label for="behavioralAssess">Behavioral Assessment:</label>
+                <br>
+                <textarea id="behavioralAssess" name="behavioralAssess" required></textarea>
+                <br>
+
+                <button type="submit">Submit Application</button>
+            </form>
+        </div>
+    </div>
+
     <footer class="footer">
-            <div class="footer-content">
-                <p>&copy; 2025 FurEver Family - All rights reserved.</p>
-                <div class="social-links">
-                    <a href="https://github.com/your-github" target="_blank">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="https://facebook.com/your-page" target="_blank">
-                        <i class="fab fa-facebook"></i>
-                    </a>
-                    <a href="https://twitter.com/your-handle" target="_blank">
-                        <i class="fab fa-x-twitter"></i>
-                    </a>
-                    <a href="https://instagram.com/your-handle" target="_blank">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                </div>
+        <div class="footer-content">
+            <p>&copy; 2025 FurEver Family - All rights reserved.</p>
+            <div class="social-links">
+                <a href="https://github.com/your-github" target="_blank">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://facebook.com/your-page" target="_blank">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                <a href="https://twitter.com/your-handle" target="_blank">
+                    <i class="fab fa-x-twitter"></i>
+                </a>
+                <a href="https://instagram.com/your-handle" target="_blank">
+                    <i class="fab fa-instagram"></i>
+                </a>
             </div>
-            <img src="/assets/image/dog1.jpg" alt="Happy pet owner with adopted dog">
-        </footer>
-    <script src="/assets/js/adopter.js"></script>
+        </div>
+        <img src="/assets/image/dog1.jpg" alt="Happy pet owner with adopted dog">
+    </footer>
+
+    <script>
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                fetch('/logout', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert("Logged out successfully!");
+                        localStorage.removeItem("isLoggedIn");
+                        localStorage.removeItem("role");
+                        window.location.href = "/loginAdmin";
+                    } else {
+                        alert("Logout failed. Please try again.");
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert("An error occurred. Please try again.");
+                });
+            }
+        }
+
+        function fetchPets() {
+            fetch("/get_pets")
+                .then(response => response.json())
+                .then(data => {
+                    const petContainer = document.getElementById("petContainer");
+                    petContainer.innerHTML = data
+                    .filter(pet => pet.evaluation_status !== "Approved")
+                    .map(pet => `
+
+                        <div class="pet-card">
+                            <img src="${pet.photo_url || '/assets/default-pet.jpg'}" alt="Pet Image">
+                            <h3>${encodeHTML(pet.pet_breed) || "Unnamed Pet"}</h3>
+                            <p><strong>Height:</strong> ${pet.pet_height || "Unknown"}</p>
+                            <p><strong>Weight:</strong> ${pet.pet_weight || "Unknown"}</p>
+                            <p><strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}</p>
+                            <p><strong>Available:</strong> ${pet.quantity || "Available"}</p>
+                            <button class="adopt-btn">Adopt</button>
+                        </div>
+                    `).join("");
+
+                    const adoptButtons = document.querySelectorAll(".adopt-btn");
+                    adoptButtons.forEach((button, index) => {
+                        button.addEventListener("click", () => openAdoptModal(data[index]));
+                    });
+                })
+                .catch(error => console.error("Error fetching pets:", error));
+        }
+
+        function encodeHTML(str) {
+            return str ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
+        }
+
+        let currentPet = null;
+
+        function openAdoptModal(pet) {
+            currentPet = pet;
+            const petDetails = document.getElementById('petDetails');
+            petDetails.innerHTML = `
+                <strong>Breed:</strong> ${encodeHTML(pet.pet_breed)}<br>
+                <strong>Height:</strong> ${pet.pet_height || "Unknown"}<br>
+                <strong>Weight:</strong> ${pet.pet_weight || "Unknown"}<br>
+                <strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}<br>
+                <strong>Available:</strong> ${pet.quantity || "Available"}<br>
+            `;
+            document.getElementById('adoptModal').style.display = "block";
+        }
+
+        function closeAdoptModal() {
+            document.getElementById('adoptModal').style.display = "none";
+        }
+
+        function openApplicationModal() {
+            document.getElementById('applicationModal').style.display = 'block';
+        }
+
+        function closeApplicationModal() {
+            document.getElementById('applicationModal').style.display = 'none';
+        }
+
+        document.querySelector('.close-btn').addEventListener('click', closeAdoptModal);
+        document.querySelector('.close-app-btn').addEventListener('click', closeApplicationModal);
+
+        window.addEventListener('click', function(event) {
+            const modal1 = document.getElementById('adoptModal');
+            const modal2 = document.getElementById('applicationModal');
+            if (event.target === modal1) closeAdoptModal();
+            if (event.target === modal2) closeApplicationModal();
+        });
+
+        document.getElementById('confirmAdoptBtn').addEventListener('click', function() {
+            closeAdoptModal();
+            // Set petId when opening the application form
+            document.getElementById('petId').value = currentPet.pet_id;
+            openApplicationModal();
+        });
+
+        document.getElementById('adoptionForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const petId = document.getElementById('petId').value;
+            const noAdoption = document.getElementById('noAdoption').value;
+            const pickupDate = document.getElementById('pickupDate').value;
+            const adoptionIncome = document.getElementById('adoptionIncome').value;
+            const adoptionHistory = document.getElementById('adoptionHistory').value;
+            const behavioralAssess = document.getElementById('behavioralAssess').value;
+
+            const applicationData = {
+                pet_id: petId,
+                no_adoption: noAdoption,
+                pickup_date: pickupDate,
+                adoption_income: adoptionIncome,
+                adoption_history: adoptionHistory,
+                behavioral_assess: behavioralAssess
+            };
+
+            fetch("/application", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(applicationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    closeApplicationModal();
+                } else if (data.error) {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                console.error("Error submitting application:", error);
+                alert("An error occurred while submitting your application.");
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", fetchPets);
+    </script>
 </body>
 </html>
