@@ -13,15 +13,19 @@
             <li onclick="hideSidebar()"><a href="#">X</a></li>
             <li><a href="adopter.html">Home</a></li>
             <li><a href="#adopt">Adopt a Pet</a></li>
-            <li><a href="#stores">Pet Stores</a></li>
-            <li><a href="#history">My Adoptions</a></li>
+            <li><a href="#stores">Shelters</a></li>
+            <a href="{{ url_for('adoption_history') }}">Adoption History</a>
+
+
             <li><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
         </ul>
         <ul>
             <li><a href="adopter.html">FurEver Family</a></li>
             <li class="hideOnMobile"><a href="#adopt">Adopt a Pet</a></li>
-            <li class="hideOnMobile"><a href="#stores">Pet Stores</a></li>
-            <li class="hideOnMobile"><a href="#history">My Adoptions</a></li>
+            <li class="hideOnMobile"><a href="#stores">Shelters</a></li>
+            <a href="{{ url_for('adoption_history') }}">Adoption History</a>
+
+
             <li class="hideOnMobile"><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
             <li class="menu-button" onclick="showSidebar()"><a href="#"><i class="fas fa-bars"></i></a></li>
         </ul>
@@ -40,10 +44,6 @@
             <div id="petContainer" class="pet-grid"></div>
         </section>
         
-        <section id="history" class="spacer">
-            <h2>My Adoption History</h2>
-            <div id="adoption-history" class="grid"></div>
-        </section>
     </main>
 
     <!-- Pet Details Modal -->

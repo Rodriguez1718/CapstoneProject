@@ -28,6 +28,84 @@ body {
     z-index: 1000;
 }
 
+/* Basic Reset for Select Dropdowns */
+select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    font-family: 'Inter', sans-serif;
+    background-color: #fff;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Arrow for select dropdown */
+select::-ms-expand {
+    display: none;
+}
+
+select:hover {
+    border-color: #6C63FF;
+}
+
+select:focus {
+    outline: none;
+    border-color: #6C63FF;
+    box-shadow: 0 0 5px rgba(108, 99, 255, 0.5);
+}
+
+/* Custom dropdown arrow */
+select::after {
+    content: "▼";
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    pointer-events: none;
+    color: #888;
+}
+
+/* For better clarity on hover */
+select:hover::after {
+    color: #6C63FF;
+}
+
+/* Styling for Pet Type and Breed Section */
+select#petType, select#petBreed {
+    background-image: url('data:image/svg+xml;base64,...'); /* Optional: Add custom arrow icon */
+    background-position: right 10px center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+    padding-right: 35px;
+}
+
+select:focus {
+    border-color: #FF4081;
+    box-shadow: 0 0 5px rgba(255, 64, 129, 0.5);
+}
+
+/* Add hover effects for submit button */
+button[type="submit"] {
+    padding: 12px 24px;
+    background-color: #FF4081;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: #E50060;
+}
+
+
 .sidebar:hover {
     width: 260px;
 }
@@ -313,7 +391,7 @@ h2 {
 }
 
 .modal-content input {
-    width: 100%;
+    width: 95%;
     padding: 10px;
     margin-bottom: 15px;
     border: 1px solid #ddd;

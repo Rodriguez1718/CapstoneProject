@@ -20,9 +20,9 @@
                 <a href="#overview" class="active"><i class="fas fa-home"></i><span class="link-text">Dashboard</span></a>
                 <a href="#adoptions"><i class="fas fa-heart"></i><span class="link-text">Adoption Records</span></a>
                 <a href="#applications"><i class="fas fa-file-alt"></i><span class="link-text">Adoption Applications</span></a>
-                <a href="#businesses"><i class="fas fa-store"></i><span class="link-text">Affiliated Businesses</span></a>
+                <a href="#businesses"><i class="fas fa-store"></i><span class="link-text">Shelters</span></a>
                 <a href="#pets"><i class="fas fa-dog"></i><span class="link-text">Pet Management</span></a>
-                <a href="#transactions"><i class="fas fa-money-bill-wave"></i><span class="link-text">Transactions</span></a>
+
             </nav>
             <button class="logout" onclick="logout()">
                 <i class="fas fa-sign-out-alt"></i><span class="link-text">Logout</span>
@@ -55,7 +55,7 @@
                 </div>
                 <table>
                     <thead>
-                        <tr><th>Adopter Name</th><th>Pet Name</th><th>Adoption Date</th></tr>
+                        <tr><th>Adopter Name</th><th>Pet Breed</th><th>Adoption Date</th></tr>
                     </thead>
                     <tbody id="adoptionTable"></tbody>
                 </table>
@@ -78,11 +78,26 @@
                         <span class="close" onclick="closePetModal()">&times;</span>
                         <h2 id="modalTitle">Add Pet</h2>
                         <form id="petForm" enctype="multipart/form-data">
-                            <input type="text" id="petType" placeholder="Pet Type (e.g., Dog, Cat)" required>
-                            <input type="text" id="petBreed" placeholder="Breed" required>
-                            <input type="number" id="petWeight" placeholder="Weight (kg)" required>
-                            <input type="number" id="petHeight" placeholder="Height (cm)" required>
-                            <input type="number" id="petQuantity" placeholder="Quantity" required>
+                         <!-- Pet Type and Breed Dropdowns -->
+                            <div class="dropdown-wrapper">
+                                <select id="petType" onchange="updateBreedOptions()" required>
+                                    <option value="">Select Pet Type</option>
+                                    <option value="Dog">Dog</option>
+                                    <option value="Cat">Cat</option>
+                                    <option value="Rabbit">Rabbit</option>
+                                    <option value="Bird">Bird</option>
+                                </select>
+                            </div>
+
+                            <div class="dropdown-wrapper">
+                                <select id="petBreed" required>
+                                    <option value="">Select Breed</option>
+                                </select>
+                            </div>
+
+                            <input type="number" id="petWeight" placeholder="Weight (kg)" min="1" required>
+                            <input type="number" id="petHeight" placeholder="Height (cm)" min="1" required>
+                            <input type="number" id="petQuantity" placeholder="Quantity" min="1" required>
                             <input type="text" id="shelterAddress" placeholder="Shelter Address" required>
                             <input type="text" id="shelterName" placeholder="Shelter Name" required>
                             <input type="text" id="contactNumber" placeholder="Contact Number" required>
@@ -99,7 +114,7 @@
                 <h2>Adoption Applications</h2>
                 <table>
                     <thead>
-                        <tr><th>Adopter Name</th><th>Pet Name</th><th>Status</th><th>Actions</th></tr>
+                        <tr><th>Adopter Name</th><th>Pet Breed</th><th>Status</th><th>Actions</th></tr>
                     </thead>
                     <tbody id="applicationTable"></tbody>
                 </table>
@@ -120,10 +135,10 @@
 
             <!-- Businesses -->
             <section id="businesses" class="section-enter">
-                <h2>Affiliated Businesses</h2>
+                <h2>Shelters</h2>
                 <table>
                     <thead>
-                        <tr><th>Business Name</th><th>Category</th><th>Contact</th></tr>
+                        <tr><th>Shelter Name</th><th>Address</th><th>Contac</th></tr>
                     </thead>
                     <tbody id="businessTable"></tbody>
                 </table>
@@ -243,6 +258,36 @@
             });
         });
 
+        // Function to update breed options based on selected pet type
+// Function to update breed options based on selected pet type
+function updateBreedOptions() {
+    const petType = document.getElementById("petType").value;
+    const petBreedSelect = document.getElementById("petBreed");
+
+    // Clear existing breed options
+    petBreedSelect.innerHTML = '<option value="">Select Breed</option>';
+
+    // Define breeds based on pet type
+    const breeds = {
+        Dog: ["Labrador", "German Shepherd", "Poodle", "Beagle", "Bulldog"],
+        Cat: ["Persian", "Siamese", "Maine Coon", "Bengal", "Sphynx"],
+        Rabbit: ["Himalayan", "Lop", "Angora", "Mini Rex"],
+        Bird: ["Parrot", "Canary", "Finch", "Cockatiel"]
+    };
+
+    // Populate breed options
+    if (breeds[petType]) {
+        breeds[petType].forEach(breed => {
+            const option = document.createElement("option");
+            option.value = breed;
+            option.textContent = breed;
+            petBreedSelect.appendChild(option);
+        });
+    }
+}
+
+
+
 // Fetch Adoption Applications
 function fetchApplications() {
     fetch("/get_adoption_applications")
@@ -280,6 +325,48 @@ function fetchApplications() {
                 <button onclick="rejectApplication(${app.evaluation_id})">Reject</button>
 
                     </td>
+                `;
+                table.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error("Error fetching applications:", error);
+            alert("Failed to load applications.");
+        });
+}
+
+
+function fetchApprovedApplications() {
+    fetch("/get_adoption_applications")
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Server error: " + response.status);
+            }
+            return response.json();
+        })
+        .then(adoptions => {
+            const table = document.getElementById("adoptionTable");
+            table.innerHTML = "";
+
+            // Check if applications is an array
+            if (!Array.isArray(adoptions)) {
+                throw new Error("Unexpected data format");
+            }
+            const pendingApps = adoptions.filter(app => app.evaluation_status === "Approved");
+
+
+            pendingApps.forEach(app => {
+                const row = document.createElement("tr");
+
+                // Use safe default values in case the fields are null or undefined
+                const adopterName = `${app.adopter_firstname || "N/A"} ${app.adopter_lastname || "N/A"}`;
+                const petName = app.pet_breed || "N/A";
+                const status = app.evaluation_status || "Approved";
+
+                row.innerHTML = `
+                    <td>${adopterName}</td>
+                    <td>${petName}</td>
+                    <td>${status}</td>
                 `;
                 table.appendChild(row);
             });
