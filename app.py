@@ -20,8 +20,8 @@ def allowed_file(filename):
 def get_db_connection():
     conn = pyodbc.connect(
         "DRIVER={SQL Server};"
-        "SERVER=LAPTOP-DHGH0RSF\SQLEXPRESS;"
-        "DATABASE=FUREVERFAMILY;"
+        "SERVER=CCSLAB530U46;"
+        "DATABASE=FUREVER;"
         "Trusted_Connection=yes;"   
     )
     return conn
@@ -73,6 +73,63 @@ def login():
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
+
+@app.route("/get_shelters", methods=["GET"])
+def get_shelters():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Use plain SELECT instead of stored procedure
+        cursor.execute("SELECT SHELTER_ID, SHELTER_NAME, [ADDRESS], CONTACT_NUMBER, EMAIL FROM PET_SHELTER")
+
+        shelters = [{
+            "shelter_id": row.SHELTER_ID,
+            "shelter_name": row.SHELTER_NAME,
+            "address": row.ADDRESS,
+            "contact_number": row.CONTACT_NUMBER,
+            "email": row.EMAIL
+        } for row in cursor.fetchall()]
+
+        conn.close()
+        return jsonify(shelters), 200
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+@app.route("/add_shelter", methods=["POST"])
+def add_shelter():
+    if "user" not in session or session.get("role") != "admin":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.json
+    address = data.get("address")
+    shelter_name = data.get("shelter_name")
+    contact_number = data.get("contact_number")
+    email = data.get("email")
+
+    if not all([address, shelter_name, contact_number, email]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            EXEC sp_InsertPetShelter 
+                @Address = ?, 
+                @ShelterName = ?, 
+                @ContactNumber = ?, 
+                @Email = ?
+        """, (address, shelter_name, contact_number, email))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "Shelter added successfully!"}), 201
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
 
 # Register API
 @app.route("/register", methods=["POST"])

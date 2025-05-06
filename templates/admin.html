@@ -106,10 +106,12 @@
                             <input type="number" id="petWeight" placeholder="Weight (kg)" min="1" required>
                             <input type="number" id="petHeight" placeholder="Height (cm)" min="1" required>
                             <input type="number" id="petQuantity" placeholder="Quantity" min="1" required>
-                            <input type="text" id="shelterAddress" placeholder="Shelter Address" required>
-                            <input type="text" id="shelterName" placeholder="Shelter Name" required>
-                            <input type="text" id="contactNumber" placeholder="Contact Number" required>
-                            <input type="email" id="shelterEmail" placeholder="Shelter Email" required>
+                            <div class="dropdown-wrapper">
+                                <select id="shelterSelect" required>
+                                    <option value="">Select Shelter</option>
+                                    <!-- Options will be populated by JS -->
+                                </select>
+                            </div>                            
                             <input type="file" id="petImage" accept="image/*" required>
                             <button type="submit">Save</button>
                         </form>
@@ -144,12 +146,29 @@
             <!-- Businesses -->
             <section id="businesses" class="section-enter">
                 <h2>Shelters</h2>
+                <button id="addShelterBtn" onclick="openShelterModal()">Add New Shelter</button>
                 <table>
                     <thead>
-                        <tr><th>Shelter Name</th><th>Address</th><th>Contac</th></tr>
+                        <tr><th>Shelter Name</th><th>Address</th><th>Contact</th></tr>
                     </thead>
                     <tbody id="businessTable"></tbody>
                 </table>
+
+                <!-- Add Shelter Modal -->
+            <div id="shelterModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeShelterModal()">&times;</span>
+                    <h2>Add New Shelter</h2>
+                    <form id="shelterForm">
+                        <input type="text" id="shelterNameInput" placeholder="Shelter Name" required />
+                        <input type="text" id="shelterAddressInput" placeholder="Shelter Address" required />
+                        <input type="text" id="shelterContactInput" placeholder="Contact Number" required />
+                        <input type="email" id="shelterEmailInput" placeholder="Email" required />
+                        <button type="submit">Save Shelter</button>
+                    </form>
+                </div>
+            </div>
+
             </section>
 
             <!-- Transactions -->
@@ -166,6 +185,107 @@
     </div>
 
     <script>
+
+function populateShelterDropdown() {
+    fetch("/get_shelters")
+        .then(response => response.json())
+        .then(shelters => {
+            const shelterSelect = document.getElementById("shelterSelect");
+            shelterSelect.innerHTML = '<option value="">Select Shelter</option>'; // Clear existing
+
+            shelters.forEach(shelter => {
+                const option = document.createElement("option");
+                // We'll encode all data as JSON string in value
+                option.value = JSON.stringify({
+                    name: shelter.shelter_name,
+                    address: shelter.address,
+                    contact: shelter.contact_number,
+                    email: shelter.email
+                });
+                option.textContent = `${shelter.shelter_name} - ${shelter.address}`;
+                shelterSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error("Error loading shelters for dropdown:", error);
+        });
+}
+
+
+function fetchShelters() {
+    fetch("/get_shelters")
+        .then(response => response.json())
+        .then(shelters => {
+            const table = document.getElementById("businessTable");
+            table.innerHTML = "";
+
+            shelters.forEach(shelter => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${shelter.shelter_name}</td>
+                    <td>${shelter.address}</td>
+                    <td>${shelter.contact_number}</td>
+                `;
+                table.appendChild(row);
+            });
+
+            document.getElementById("totalBusinesses").textContent = shelters.length;
+        })
+        .catch(error => {
+            console.error("Error loading shelters:", error);
+        });
+}
+
+        function openShelterModal() {
+            document.getElementById("shelterModal").classList.add("active");
+        }
+
+        function closeShelterModal() {
+            document.getElementById("shelterModal").classList.remove("active");
+        }
+
+        window.addEventListener("click", e => {
+            const modal = document.getElementById("shelterModal");
+            if (e.target === modal) closeShelterModal();
+        });
+
+
+        document.getElementById("shelterForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const shelterData = {
+                shelter_name: document.getElementById("shelterNameInput").value.trim(),
+                address: document.getElementById("shelterAddressInput").value.trim(),
+                contact_number: document.getElementById("shelterContactInput").value.trim(),
+                email: document.getElementById("shelterEmailInput").value.trim()
+            };
+
+            fetch("/add_shelter", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(shelterData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert(data.message);
+                    document.getElementById("shelterForm").reset();
+                    // Optionally refresh the shelters table
+                    fetchShelters();
+                } else {
+                    alert(data.error || "Failed to add shelter.");
+                }
+            })
+            .catch(error => {
+                console.error("Error adding shelter:", error);
+                alert("An unexpected error occurred.");
+            });
+        });
+
+
+
         // Auth check
         if (!localStorage.getItem('role')) {
             window.location.replace('/loginAdmin');
@@ -176,6 +296,7 @@
         fetchApplications(); 
         showSectionFromHash();
         fetchPets();
+        fetchShelters();
     };
 
 
@@ -208,9 +329,11 @@
         }
 
         // Modal control
-        function openPetModal() {
-            document.getElementById("petModal").classList.add("active");
-        }
+            function openPetModal() {
+        document.getElementById("petModal").classList.add("active");
+        populateShelterDropdown(); // <-- Load shelters
+    }
+
         function closePetModal() {
             document.getElementById("petModal").classList.remove("active");
         }
@@ -289,39 +412,46 @@ renderPlotlyPieChart(window.totalPetsCount || 0, window.pendingCount || 0, windo
 
         // Submit Pet Form
         document.getElementById("petForm").addEventListener("submit", function (event) {
-            event.preventDefault();
-            const formData = new FormData();
-            formData.append("pet_type", document.getElementById("petType").value);
-            formData.append("pet_breed", document.getElementById("petBreed").value);
-            formData.append("pet_weight", document.getElementById("petWeight").value);
-            formData.append("pet_height", document.getElementById("petHeight").value);
-            formData.append("quantity", document.getElementById("petQuantity").value);
-            formData.append("shelter_address", document.getElementById("shelterAddress").value);
-            formData.append("shelter_name", document.getElementById("shelterName").value);
-            formData.append("contact_number", document.getElementById("contactNumber").value);
-            formData.append("email", document.getElementById("shelterEmail").value);
-            const petImage = document.getElementById("petImage").files[0];
-            if (petImage) formData.append("image", petImage);
+    event.preventDefault();
+    
+    const formData = new FormData();
+    formData.append("pet_type", document.getElementById("petType").value);
+    formData.append("pet_breed", document.getElementById("petBreed").value);
+    formData.append("pet_weight", document.getElementById("petWeight").value);
+    formData.append("pet_height", document.getElementById("petHeight").value);
+    formData.append("quantity", document.getElementById("petQuantity").value);
 
-            fetch("/add_pet", {
-                method: "POST",
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    closePetModal();
-                    fetchPets();
-                } else {
-                    alert(data.error || "Failed to add pet.");
-                }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                alert("An unexpected error occurred.");
-            });
-        });
+    // ✅ Use selected shelter from dropdown
+    const selectedShelter = JSON.parse(document.getElementById("shelterSelect").value);
+    formData.append("shelter_name", selectedShelter.name);
+    formData.append("shelter_address", selectedShelter.address);
+    formData.append("contact_number", selectedShelter.contact);
+    formData.append("email", selectedShelter.email);
+
+    // Image
+    const petImage = document.getElementById("petImage").files[0];
+    if (petImage) formData.append("image", petImage);
+
+    fetch("/add_pet", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            closePetModal();
+            fetchPets();
+        } else {
+            alert(data.error || "Failed to add pet.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("An unexpected error occurred.");
+    });
+});
+
 
         // Function to update breed options based on selected pet type
 // Function to update breed options based on selected pet type

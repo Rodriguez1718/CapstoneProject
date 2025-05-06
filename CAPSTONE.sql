@@ -333,3 +333,15 @@ BEGIN
     WHERE EVALUATION_ID = @EvaluationID;
 END;
 
+CREATE PROCEDURE sp_InsertPetShelter
+    @Address VARCHAR(150),
+    @ShelterName VARCHAR(20),
+    @ContactNumber VARCHAR(15),
+    @Email VARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    INSERT INTO PET_SHELTER ([ADDRESS], SHELTER_NAME, CONTACT_NUMBER, EMAIL)
+    VALUES (@Address, @ShelterName, @ContactNumber, @Email);
+END;
