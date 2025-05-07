@@ -117,6 +117,45 @@
                         </form>
                     </div>
                 </div>
+
+                <div id="editPetModal" class="modal">
+                    <div class="modal-content">
+                        <h2>Edit Pet</h2>
+                        <form id="editPetForm">
+                            <input type="hidden" id="editPetId" />
+                
+                            <label>Type:</label>
+                            <select id="editPetType" onchange="updateEditBreedOptions()">
+                                <option value="">Select Type</option>
+                                <option value="Dog">Dog</option>
+                                <option value="Cat">Cat</option>
+                                <option value="Rabbit">Rabbit</option>
+                                <option value="Bird">Bird</option>
+                            </select>
+                
+                            <label>Breed:</label>
+                            <select id="editPetBreed">
+                                <option value="">Select Breed</option>
+                            </select>
+                
+                            <label>Weight:</label>
+                            <input type="text" id="editPetWeight" />
+                
+                            <label>Height:</label>
+                            <input type="text" id="editPetHeight" />
+                
+                            <label>Quantity:</label>
+                            <input type="number" id="editPetQuantity" min="1" />
+                
+                            <label>Image (optional):</label>
+                            <input type="file" id="editPetImage" />
+                
+                            <button type="submit">Update Pet</button>
+                            <button type="button" onclick="closeEditPetModal()">Cancel</button>
+                        </form>
+                    </div>
+                </div>
+                
             </section>
 
             <!-- Applications -->
@@ -149,7 +188,7 @@
                 <button id="addShelterBtn" onclick="openShelterModal()">Add New Shelter</button>
                 <table>
                     <thead>
-                        <tr><th>Shelter Name</th><th>Address</th><th>Contact</th></tr>
+                        <tr><th>Image</th><th>Shelter Name</th><th>Address</th><th>Contact</th><th>Action</th></tr>
                     </thead>
                     <tbody id="businessTable"></tbody>
                 </table>
@@ -159,15 +198,38 @@
                 <div class="modal-content">
                     <span class="close" onclick="closeShelterModal()">&times;</span>
                     <h2>Add New Shelter</h2>
-                    <form id="shelterForm">
+                    <form id="shelterForm" enctype="multipart/form-data">
                         <input type="text" id="shelterNameInput" placeholder="Shelter Name" required />
                         <input type="text" id="shelterAddressInput" placeholder="Shelter Address" required />
                         <input type="text" id="shelterContactInput" placeholder="Contact Number" required />
                         <input type="email" id="shelterEmailInput" placeholder="Email" required />
+                        <input type="file" id="shelterPhotoInput" name="image" accept="image/*" />
                         <button type="submit">Save Shelter</button>
                     </form>
+                    
                 </div>
             </div>
+
+            <!-- Edit Shelter Modal -->
+            <div id="editShelterModal" class="modal">
+                <div class="modal-content">
+                    <span class="close" onclick="closeEditShelterModal()">&times;</span>
+                    <h2>Edit Shelter</h2>
+                    <form id="editShelterForm" enctype="multipart/form-data">
+                        <input type="hidden" id="editShelterId" />
+                        <input type="text" id="editShelterNameInput" placeholder="Shelter Name" required />
+                        <input type="text" id="editShelterAddressInput" placeholder="Shelter Address" required />
+                        <input type="text" id="editShelterContactInput" placeholder="Contact Number" required />
+                        <input type="email" id="editShelterEmailInput" placeholder="Email" required />
+                        <input type="file" id="editShelterPhotoInput" name="image" accept="image/*" />
+                        <img id="editShelterPhoto" src="" alt="Shelter Photo" style="width: 100px; justify-content: center;text-align: center;height: 100px; object-fit: cover; margin-top: 10px;" /><br>
+
+                        <button type="submit">Save Changes</button>
+                    </form>
+                    
+                </div>
+            </div>
+
 
             </section>
 
@@ -185,6 +247,82 @@
     </div>
 
     <script>
+
+function closeEditShelterModal() {
+    document.getElementById("editShelterModal").classList.remove("active");
+}
+
+function openEditShelterModal(shelterId) {
+    fetch(`/get_shelter/${shelterId}`)
+        .then(response => response.json())
+        .then(shelter => {
+            console.log(shelter); // Debugging: Check the shelter object
+            if (shelter.error) {
+                alert(shelter.error);  // Show the error from the API
+            } else {
+                document.getElementById("editShelterId").value = shelter.shelter_id;
+                document.getElementById("editShelterNameInput").value = shelter.shelter_name;
+                document.getElementById("editShelterAddressInput").value = shelter.address;
+                document.getElementById("editShelterContactInput").value = shelter.contact_number;
+                document.getElementById("editShelterEmailInput").value = shelter.email;
+
+                const photoElement = document.getElementById("editShelterPhoto");
+                if (shelter.image_url) {
+                    photoElement.src = `${shelter.image_url}`;
+                } else {
+                    photoElement.src = ""; // Clear if no photo
+                }
+
+                document.getElementById("editShelterModal").classList.add("active");
+            }
+        })
+        .catch(err => {
+            console.error("Failed to load shelter for editing:", err);
+            alert("Could not load shelter data.");
+        });
+}
+
+document.getElementById("editShelterForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const shelterId = document.getElementById("editShelterId").value;
+    const formData = new FormData();
+    formData.append("shelter_name", document.getElementById("editShelterNameInput").value.trim());
+    formData.append("address", document.getElementById("editShelterAddressInput").value.trim());
+    formData.append("contact_number", document.getElementById("editShelterContactInput").value.trim());
+    formData.append("email", document.getElementById("editShelterEmailInput").value.trim());
+
+    const imageFile = document.getElementById("editShelterPhotoInput").files[0];
+    if (imageFile) {
+        formData.append("image", imageFile);
+    }
+
+    fetch(`/edit_shelter/${shelterId}`, {
+    method: "PUT",
+    body: formData
+})
+.then(response => {
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+})
+.then(data => {
+    if (data.message) {
+        alert(data.message);
+        closeEditShelterModal();
+        fetchShelters();
+    } else {
+        alert(data.error || "Failed to edit shelter.");
+    }
+})
+.catch(error => {
+    console.error("Error editing shelter:", error);
+    alert("An unexpected error occurred.");
+});
+});
+
+
 
 function populateShelterDropdown() {
     fetch("/get_shelters")
@@ -211,7 +349,6 @@ function populateShelterDropdown() {
         });
 }
 
-
 function fetchShelters() {
     fetch("/get_shelters")
         .then(response => response.json())
@@ -222,19 +359,22 @@ function fetchShelters() {
             shelters.forEach(shelter => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
+                    <td><img src="${shelter.image_url}" alt="shelter photo" width="80" /></td>
                     <td>${shelter.shelter_name}</td>
                     <td>${shelter.address}</td>
                     <td>${shelter.contact_number}</td>
+                    <td>
+                        <button onclick="openEditShelterModal(${shelter.shelter_id})">Edit</button>
+                    </td>
                 `;
                 table.appendChild(row);
             });
-
-            document.getElementById("totalBusinesses").textContent = shelters.length;
         })
         .catch(error => {
             console.error("Error loading shelters:", error);
         });
 }
+
 
         function openShelterModal() {
             document.getElementById("shelterModal").classList.add("active");
@@ -251,53 +391,54 @@ function fetchShelters() {
 
 
         document.getElementById("shelterForm").addEventListener("submit", function (e) {
-            e.preventDefault();
+    e.preventDefault();
 
-            const shelterData = {
-                shelter_name: document.getElementById("shelterNameInput").value.trim(),
-                address: document.getElementById("shelterAddressInput").value.trim(),
-                contact_number: document.getElementById("shelterContactInput").value.trim(),
-                email: document.getElementById("shelterEmailInput").value.trim()
-            };
+    const formData = new FormData();
+    formData.append("shelter_name", document.getElementById("shelterNameInput").value.trim());
+    formData.append("address", document.getElementById("shelterAddressInput").value.trim());
+    formData.append("contact_number", document.getElementById("shelterContactInput").value.trim());
+    formData.append("email", document.getElementById("shelterEmailInput").value.trim());
 
-            fetch("/add_shelter", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(shelterData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    document.getElementById("shelterForm").reset();
-                    // Optionally refresh the shelters table
-                    fetchShelters();
-                } else {
-                    alert(data.error || "Failed to add shelter.");
-                }
-            })
-            .catch(error => {
-                console.error("Error adding shelter:", error);
-                alert("An unexpected error occurred.");
-            });
-        });
+    const imageFile = document.getElementById("shelterPhotoInput").files[0];
+    if (imageFile) {
+        formData.append("image", imageFile); // <- Fixed here
+    }
 
-
-
-        // Auth check
-        if (!localStorage.getItem('role')) {
-            window.location.replace('/loginAdmin');
+    fetch("/add_shelter", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            document.getElementById("shelterForm").reset();
+            closeShelterModal();
+            fetchShelters();
+        } else {
+            alert(data.error || "Failed to add shelter.");
         }
+    })
+    .catch(error => {
+        console.error("Error adding shelter:", error);
+        alert("An unexpected error occurred.");
+    });
+});
 
-        window.onload = function () {
-        fetchApprovedApplications();
-        fetchApplications(); 
-        showSectionFromHash();
-        fetchPets();
-        fetchShelters();
-    };
+
+
+                    // Auth check
+                    if (!localStorage.getItem('role')) {
+                        window.location.replace('/loginAdmin');
+                    }
+
+                    window.onload = function () {
+                    fetchApprovedApplications();
+                    fetchApplications(); 
+                    showSectionFromHash();
+                    fetchPets();
+                    fetchShelters();
+                };
 
 
     function renderPlotlyPieChart(totalPetsCount, pendingCount, approvedCount) {
@@ -381,7 +522,6 @@ function fetchShelters() {
                     <td>${pet.quantity}</td>
                     <td>
                         <button onclick="editPet(${pet.pet_id})">Edit</button>
-                        <button onclick="deletePet(${pet.pet_id})">Delete</button>
                     </td>
                 `;
                 table.appendChild(row);
@@ -389,6 +529,7 @@ function fetchShelters() {
 
             // Update the dashboard count
             document.getElementById("totalPets").textContent = total;
+        
             window.totalPetsCount = total; // store globally for chart
 // After fetching totalPetsCount, pendingCount, and approvedCount, call:
 renderPlotlyPieChart(window.totalPetsCount || 0, window.pendingCount || 0, window.approvedCount || 0);
@@ -399,10 +540,93 @@ renderPlotlyPieChart(window.totalPetsCount || 0, window.pendingCount || 0, windo
         });
 }
 
+function openEditPetModal(pet) {
+    document.getElementById("editPetModal").classList.add("active");
 
-        function editPet(petId) {
-            alert(`Edit pet with ID: ${petId}`);
-        }
+    // Fill in values
+    document.getElementById("editPetId").value = pet.pet_id;
+    document.getElementById("editPetType").value = pet.pet_type;
+    updateEditBreedOptions(); // Load breeds
+    document.getElementById("editPetBreed").value = pet.pet_breed;
+    document.getElementById("editPetWeight").value = pet.pet_weight;
+    document.getElementById("editPetHeight").value = pet.pet_height;
+    document.getElementById("editPetQuantity").value = pet.quantity;
+}
+
+function closeEditPetModal() {
+    document.getElementById("editPetModal").classList.remove("active");
+}
+
+
+function updateEditBreedOptions() {
+    const petType = document.getElementById("editPetType").value;
+    const breedSelect = document.getElementById("editPetBreed");
+    breedSelect.innerHTML = '<option value="">Select Breed</option>';
+
+    const breeds = {
+        Dog: ["Labrador", "German Shepherd", "Poodle", "Beagle", "Bulldog"],
+        Cat: ["Persian", "Siamese", "Maine Coon", "Bengal", "Sphynx"],
+        Rabbit: ["Himalayan", "Lop", "Angora", "Mini Rex"],
+        Bird: ["Parrot", "Canary", "Finch", "Cockatiel"]
+    };
+
+    (breeds[petType] || []).forEach(breed => {
+        const option = document.createElement("option");
+        option.value = breed;
+        option.textContent = breed;
+        breedSelect.appendChild(option);
+    });
+}
+
+
+document.getElementById("editPetForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData();
+    const petId = document.getElementById("editPetId").value;
+
+    formData.append("pet_type", document.getElementById("editPetType").value);
+    formData.append("pet_breed", document.getElementById("editPetBreed").value);
+    formData.append("pet_weight", document.getElementById("editPetWeight").value);
+    formData.append("pet_height", document.getElementById("editPetHeight").value);
+    formData.append("quantity", document.getElementById("editPetQuantity").value);
+
+    const petImage = document.getElementById("editPetImage").files[0];
+    if (petImage) formData.append("image", petImage);
+
+    fetch(`/edit_pet/${petId}`, {
+        method: "POST", // Or PUT if you're using REST
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message || "Pet updated.");
+        closeEditPetModal();
+        fetchPets();
+    })
+    .catch(err => {
+        console.error("Edit error:", err);
+        alert("Failed to update pet.");
+    });
+});
+
+
+
+function editPet(petId) {
+    fetch(`/get_pet/${petId}`)
+        .then(r => r.json())
+        .then(pet => {
+            if (pet.error) {
+                alert(pet.error);  // Show the error from the API
+            } else {
+                openEditPetModal(pet);
+            }
+        })
+        .catch(err => {
+            console.error("Failed to load pet for edit:", err);
+            alert("Could not load pet data.");
+        });
+}
 
         function deletePet(petId) {
             if (confirm("Are you sure you want to delete this pet?")) {
@@ -483,6 +707,7 @@ function updateBreedOptions() {
 
 
 
+
 // Fetch Adoption Applications
 function fetchApplications() {
     fetch("/get_adoption_applications")
@@ -546,6 +771,7 @@ function fetchApprovedApplications() {
             if (!Array.isArray(adoptions)) throw new Error("Unexpected data format");
 
             const approvedApps = adoptions.filter(app => app.evaluation_status === "Approved");
+            const allrecord = adoptions.filter(app => app.evaluation_status === "Approved" || app.evaluation_status === "Pending" || app.evaluation_status === "Rejected" )
 
             // ✅ Update the dashboard count
             document.getElementById("totalAdoptions").textContent = approvedApps.length;
@@ -554,7 +780,7 @@ function fetchApprovedApplications() {
 renderPlotlyPieChart(window.totalPetsCount || 0, window.pendingCount || 0, window.approvedCount || 0);
 
 
-            approvedApps.forEach(app => {
+            allrecord.forEach(app => {
                 const row = document.createElement("tr");
                 const adopterName = `${app.adopter_firstname || "N/A"} ${app.adopter_lastname || "N/A"}`;
                 const petBreed = app.pet_breed || "N/A";

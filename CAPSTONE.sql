@@ -37,7 +37,7 @@ PET_ID INT NOT NULL,
 [USER_ID] INT NOT NULL,
 NO_ADOPTION INT NOT NULL,
 PICKUP_DATE DATE NOT NULL,
-ADOPTION_DATE DATE NOT NULL,
+ADOPTION_DATE DATE DEFAULT GETDATE() NOT NULL,
 FOREIGN KEY (PET_ID) REFERENCES PET(PET_ID),
 FOREIGN KEY ([USER_ID]) REFERENCES [USER]([USER_ID])
 )
@@ -61,6 +61,7 @@ SHELTER_ID INT IDENTITY(1,1) PRIMARY KEY NOT NULL,
 SHELTER_NAME VARCHAR(20) NOT NULL,
 CONTACT_NUMBER VARCHAR(15) NOT NULL,
 EMAIL VARCHAR(100) NOT NULL,
+IMAGE_URL VARCHAR(100) NOT NULL
 )
 
 CREATE TABLE REVIEW(
@@ -74,12 +75,42 @@ FOREIGN KEY([USER_ID]) REFERENCES [USER]([USER_ID])
 
 )
 
+ALTER TABLE REVIEW
+ADD RATING INT NOT NULL CHECK (RATING BETWEEN 1 AND 5)
 
 /*Stored Procedure and Triggers*/
+USE [FUREVERFAMILY]
+GO
+/****** Object:  StoredProcedure [dbo].[LOGINUSER]    Script Date: 5/7/2025 9:16:46 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[LOGINUSER]
+@USERNAME VARCHAR(100),
+@PASSWORD VARCHAR(100),
+@ROLE VARCHAR(15) OUTPUT
+AS
+BEGIN
+DECLARE @StoredPassword VARCHAR(100);
+
+SELECT @StoredPassword = [PASSWORD], @ROLE = ROLE
+FROM [USER]
+WHERE USERNAME = @USERNAME;
+
+IF @StoredPassword IS NULL
+BEGIN
+
+RETURN -1;
+END
+
+
+RETURN 0;
+END;
 
 USE [FUREVERFAMILY]
 GO
-/****** Object:  StoredProcedure [dbo].[RegisterUser]    Script Date: 5/2/2025 4:00:47 AM ******/
+/****** Object:  StoredProcedure [dbo].[RegisterUser]    Script Date: 5/7/2025 9:17:56 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -107,40 +138,9 @@ INSERT INTO [USER] (REGISTER_ID, ROLE, USERNAME, [PASSWORD])
 VALUES (@REGISTER_ID, @ROLE, @USERNAME, @PASSWORD);
 END;
 
-
 USE [FUREVERFAMILY]
 GO
-/****** Object:  StoredProcedure [dbo].[LOGINUSER]    Script Date: 5/2/2025 4:00:35 AM ******/
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-ALTER PROCEDURE [dbo].[LOGINUSER]
-@USERNAME VARCHAR(100),
-@PASSWORD VARCHAR(100),
-@ROLE VARCHAR(15) OUTPUT
-AS
-BEGIN
-DECLARE @StoredPassword VARCHAR(100);
-
-SELECT @StoredPassword = [PASSWORD], @ROLE = ROLE
-FROM [USER]
-WHERE USERNAME = @USERNAME;
-
-IF @StoredPassword IS NULL
-BEGIN
-
-RETURN -1;
-END
-
-
-RETURN 0;
-END;
-
-
-USE [FUREVERFAMILY]
-GO
-/****** Object:  StoredProcedure [dbo].[sp_AddPetWithShelter]    Script Date: 5/2/2025 4:37:02 AM ******/
+/****** Object:  StoredProcedure [dbo].[sp_AddPetWithShelter]    Script Date: 5/7/2025 9:18:57 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
@@ -156,14 +156,15 @@ ALTER PROCEDURE [dbo].[sp_AddPetWithShelter]
     @ShelterAddress VARCHAR(150),
     @ShelterName VARCHAR(20),
     @ContactNumber VARCHAR(15),
-    @Email VARCHAR(100)
+    @Email VARCHAR(100),
+    @Image_url VARCHAR(100)
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @ShelterID INT;
 
-    -- Check if shelter already exists
+    -- Check if shelter already exists (ignore IMAGE_URL for matching)
     SELECT @ShelterID = SHELTER_ID
     FROM PET_SHELTER
     WHERE [ADDRESS] = @ShelterAddress
@@ -173,8 +174,8 @@ BEGIN
     -- If shelter doesn't exist, insert it
     IF @ShelterID IS NULL
     BEGIN
-        INSERT INTO PET_SHELTER ([ADDRESS], SHELTER_NAME, CONTACT_NUMBER, EMAIL)
-        VALUES (@ShelterAddress, @ShelterName, @ContactNumber, @Email);
+        INSERT INTO PET_SHELTER ([ADDRESS], SHELTER_NAME, CONTACT_NUMBER, EMAIL, IMAGE_URL)
+        VALUES (@ShelterAddress, @ShelterName, @ContactNumber, @Email, @Image_url);
 
         SET @ShelterID = SCOPE_IDENTITY(); -- Get new Shelter ID
     END
@@ -183,43 +184,14 @@ BEGIN
     INSERT INTO PET ([USER_ID], PET_TYPE, PET_BREED, PHOTO_URL, PET_WEIGHT, PET_HEIGHT, QUANTITY, SHELTER_ID)
     VALUES (@UserID, @PetType, @PetBreed, @PhotoURL, @PetWeight, @PetHeight, @Quantity, @ShelterID);
 END;
-
 USE [FUREVERFAMILY]
 GO
-/****** Object:  StoredProcedure [dbo].[sp_GetPetsWithShelter]    Script Date: 5/2/2025 4:37:25 AM ******/
+/****** Object:  StoredProcedure [dbo].[sp_ApplyForAdoptionWithDetails]    Script Date: 5/7/2025 9:20:02 AM ******/
 SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-ALTER PROCEDURE [dbo].[sp_GetPetsWithShelter]
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT 
-        P.PET_ID,
-        P.USER_ID,
-        P.PET_TYPE,
-        P.PET_BREED,
-        P.PHOTO_URL,
-        P.PET_WEIGHT,
-        P.PET_HEIGHT,
-        P.QUANTITY,
-        S.SHELTER_ID,
-        S.SHELTER_NAME,
-        S.[ADDRESS] AS SHELTER_ADDRESS,
-        S.CONTACT_NUMBER,
-        S.EMAIL
-    FROM PET P
-    INNER JOIN PET_SHELTER S ON P.SHELTER_ID = S.SHELTER_ID
-    LEFT JOIN ADOPTION A ON A.PET_ID = P.PET_ID
-    LEFT JOIN EVALUATION E ON A.ADOPTION_ID = E.ADOPTION_ID
-    WHERE E.EVALUATION_STATUS IS NULL OR E.EVALUATION_STATUS = 'Pending' OR E.EVALUATION_STATUS = 'Rejected'
-    ORDER BY P.PET_ID DESC;
-END
-
-
-CREATE PROCEDURE sp_ApplyForAdoptionWithDetails
+ALTER PROCEDURE [dbo].[sp_ApplyForAdoptionWithDetails]
     @PET_ID INT,
     @USER_ID INT,
     @NO_ADOPTION INT,
@@ -231,46 +203,92 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Insert into ADOPTION table
-    INSERT INTO ADOPTION (
-        PET_ID,
-        [USER_ID],
-        NO_ADOPTION,
-        PICKUP_DATE
-    )
-    VALUES (
-        @PET_ID,
-        @USER_ID,
-        @NO_ADOPTION,
-        @PICKUP_DATE
-    );
+    BEGIN TRY
+        BEGIN TRANSACTION;
 
-    -- Get the ID of the newly inserted ADOPTION record
-    DECLARE @NewAdoptionID INT = SCOPE_IDENTITY();
+        -- Insert into ADOPTION table
+        INSERT INTO ADOPTION (
+            PET_ID,
+            [USER_ID],
+            NO_ADOPTION,
+            PICKUP_DATE
+        )
+        VALUES (
+            @PET_ID,
+            @USER_ID,
+            @NO_ADOPTION,
+            @PICKUP_DATE
+        );
 
-    -- Insert into EVALUATION table with provided evaluation details
-    INSERT INTO EVALUATION (
-        [USER_ID],
-        ADOPTION_ID,
-        EVALUATION_STATUS,
-        ADOPTION_INCOME,
-        ADOPTION_HISTORY,
-        BEHAVIORAL_ASSESS,
-        EVALUATION_DATE
-    )
-    VALUES (
-        @USER_ID,
-        @NewAdoptionID,
-        'Pending',  -- You can modify the status as needed
-        @ADOPTION_INCOME,
-        @ADOPTION_HISTORY,
-        @BEHAVIORAL_ASSESS,
-        GETDATE()
-    );
+        -- Get the ID of the newly inserted ADOPTION record
+        DECLARE @NewAdoptionID INT = SCOPE_IDENTITY();
+
+        -- Insert into EVALUATION table with provided evaluation details
+        INSERT INTO EVALUATION (
+            [USER_ID],
+            ADOPTION_ID,
+            EVALUATION_STATUS,
+            ADOPTION_INCOME,
+            ADOPTION_HISTORY,
+            BEHAVIORAL_ASSESS,
+            EVALUATION_DATE
+        )
+        VALUES (
+            @USER_ID,
+            @NewAdoptionID,
+            'Pending',  -- You can modify the status as needed
+            @ADOPTION_INCOME,
+            @ADOPTION_HISTORY,
+            @BEHAVIORAL_ASSESS,
+            GETDATE()
+        );
+
+        -- Update the PET table to reduce the quantity by the number of adoptions
+        UPDATE PET
+        SET QUANTITY = QUANTITY - @NO_ADOPTION
+        WHERE PET_ID = @PET_ID AND QUANTITY >= @NO_ADOPTION;
+
+        -- Check if the update was successful
+        IF @@ROWCOUNT = 0
+        BEGIN
+            THROW 50000, 'Insufficient pet quantity for adoption.', 1;
+        END
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+
+USE [FUREVERFAMILY]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_ApproveAdoptionApplication]    Script Date: 5/7/2025 9:21:21 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_ApproveAdoptionApplication]
+    @EvaluationID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE EVALUATION
+    SET EVALUATION_STATUS = 'Approved'
+    WHERE EVALUATION_ID = @EvaluationID;
 END;
 
 
-CREATE PROCEDURE sp_GetAdoptionApplications
+USE [FUREVERFAMILY]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_GetAdoptionApplications]    Script Date: 5/7/2025 9:22:23 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_GetAdoptionApplications]
 AS
 BEGIN
     SET NOCOUNT ON;
@@ -311,18 +329,49 @@ BEGIN
 END;
 
 
-CREATE PROCEDURE sp_ApproveAdoptionApplication
-    @EvaluationID INT
+USE [FUREVERFAMILY]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_GetPetsWithShelter]    Script Date: 5/7/2025 9:23:23 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_GetPetsWithShelter]
 AS
 BEGIN
     SET NOCOUNT ON;
 
-    UPDATE EVALUATION
-    SET EVALUATION_STATUS = 'Approved'
-    WHERE EVALUATION_ID = @EvaluationID;
-END;
+    SELECT 
+        P.PET_ID,
+        P.USER_ID,
+        P.PET_TYPE,
+        P.PET_BREED,
+        P.PHOTO_URL,
+        P.PET_WEIGHT,
+        P.PET_HEIGHT,
+        P.QUANTITY,
+        S.SHELTER_ID,
+        S.SHELTER_NAME,
+        S.[ADDRESS] AS SHELTER_ADDRESS,
+        S.CONTACT_NUMBER,
+        S.EMAIL
+    FROM PET P
+    INNER JOIN PET_SHELTER S ON P.SHELTER_ID = S.SHELTER_ID
+    LEFT JOIN ADOPTION A ON A.PET_ID = P.PET_ID
+    LEFT JOIN EVALUATION E ON A.ADOPTION_ID = E.ADOPTION_ID
+    WHERE E.EVALUATION_STATUS IS NULL OR E.EVALUATION_STATUS = 'Pending' OR E.EVALUATION_STATUS = 'Rejected'
+    ORDER BY P.PET_ID DESC;
+END
 
-CREATE PROCEDURE sp_RejectAdoptionApplication
+
+USE [FUREVERFAMILY]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_RejectAdoptionApplication]    Script Date: 5/7/2025 9:24:20 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+ALTER PROCEDURE [dbo].[sp_RejectAdoptionApplication]
     @EvaluationID INT
 AS
 BEGIN
@@ -331,17 +380,4 @@ BEGIN
     UPDATE EVALUATION
     SET EVALUATION_STATUS = 'Rejected'
     WHERE EVALUATION_ID = @EvaluationID;
-END;
-
-CREATE PROCEDURE sp_InsertPetShelter
-    @Address VARCHAR(150),
-    @ShelterName VARCHAR(20),
-    @ContactNumber VARCHAR(15),
-    @Email VARCHAR(100)
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    INSERT INTO PET_SHELTER ([ADDRESS], SHELTER_NAME, CONTACT_NUMBER, EMAIL)
-    VALUES (@Address, @ShelterName, @ContactNumber, @Email);
 END;

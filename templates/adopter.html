@@ -13,8 +13,8 @@
             <li onclick="hideSidebar()"><a href="#">X</a></li>
             <li><a href="adopter.html">Home</a></li>
             <li><a href="#adopt">Adopt a Pet</a></li>
-            <li><a href="#stores">Shelters</a></li>
-            <a href="{{ url_for('adoption_history') }}">Adoption History</a>
+            <li><a href="#shelter">Shelters</a></li>
+            <li><a href="#adoption">Adoption History</a></li>
 
 
             <li><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
@@ -22,8 +22,8 @@
         <ul>
             <li><a href="adopter.html">FurEver Family</a></li>
             <li class="hideOnMobile"><a href="#adopt">Adopt a Pet</a></li>
-            <li class="hideOnMobile"><a href="#stores">Shelters</a></li>
-            <a href="{{ url_for('adoption_history') }}">Adoption History</a>
+            <li class="hideOnMobile"><a href="#shelter">Shelters</a></li>
+            <li class="hideOnMobile"><a href="#adoption">Adoption History</a></li>
 
 
             <li class="hideOnMobile"><a class="logout" id="logout-button" href="#" onclick="logout()">Logout</a></li>
@@ -32,16 +32,26 @@
     </nav>
 
     <main>
-        <section id="adopt" class="spacer-adopt grid2 grid-1">
-            <div><h2>Available Pets for Adoption</h2></div>
-            <div><p>Our adoptable cats and dogs are all spayed/neutered (kapon) and vaccinated. Because they lived a difficult life before being rescued, we need to be sure that they get adopted by loving humans and won’t be subjected to further cruelty or neglect. Here’s how to apply:</p></div>
-            <div><p>Pictures of Pets</p></div>
-            <div><p>Pictures of Pets</p></div>
+        <<section id="adopt" class="spacer-adopt grid2 grid-1">
+            <div><h2 class="animated-text">WELCOME ADOPTERS!!</h2></div>
+            <div style="text-align: center; margin-right: auto; margin-left: auto;">
+                <p class="animated-paragraph">Our adoptable cats and dogs are all spayed/neutered (kapon) and vaccinated. Because they lived a difficult life before being rescued, we need to be sure that they get adopted by loving humans and won’t be subjected to further cruelty or neglect. Here’s how to apply:</p>
+            </div>
         </section>
 
         <section id="adopt" class="spacer grid grid-2">
             <div><h2>Available Pets for Adoption</h2></div>
             <div id="petContainer" class="pet-grid"></div>
+        </section>
+        <section id="shelter" class="shelter-container">
+            <h2>Our Shelters</h2>
+            <div id="shelterContainer" class="shelter-grid">
+                <!-- Shelter cards will be dynamically loaded here -->
+            </div>
+        </section>
+        <section id="adoption" class="adoption-history-container">
+            <h2>Adoption History</h2>
+            <div id="adoptionHistoryContainer" class="adoption-history-grid"></div>
         </section>
         
     </main>
@@ -77,7 +87,7 @@
 
                 <label for="adoptionIncome">Your Income:</label>
                 <br>
-                <input type="number" id="adoptionIncome" name="adoptionIncome" required>
+                <input type="number" id="adoptionIncome" name="adoptionIncome" min="1" required>
                 <br>
 
                 <label for="adoptionHistory">Adoption History:</label>
@@ -94,6 +104,8 @@
             </form>
         </div>
     </div>
+
+    
 
     <footer class="footer">
         <div class="footer-content">
@@ -117,6 +129,162 @@
     </footer>
 
     <script>
+
+
+/*document.addEventListener("DOMContentLoaded", function () {
+    fetch("/adoption_history_page")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById("adoptionHistoryContainer");
+
+            if (!data.length) {
+                container.innerHTML = "<p>No adoptions found.</p>";
+                return;
+            }
+
+            container.innerHTML = data.map(app => `
+                <div class="history-card">
+                    <img src="${app.photo_url || '/assets/default-pet.jpg'}" alt="Pet Image">
+                    <h3>${app.pet_breed} (${app.pet_type})</h3>
+                    <p><strong>Status:</strong> ${app.status}</p>
+                    <p><strong>Pickup Date:</strong> ${app.pickup_date || "TBD"}</p>
+                </div>
+            `).join("");
+        })
+        .catch(err => {
+            console.error("Failed to load adoption history:", err);
+        });
+});*/
+
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("/get_shelters")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById("shelterContainer");
+
+            if (!data.length) {
+                container.innerHTML = "<p>No shelters found.</p>";
+                return;
+            }
+
+            container.innerHTML = data.map(shelter => `
+                <div class="shelter-card">
+                    <img src="${shelter.image_url}" alt="Shelter Image">
+                    <h3>${shelter.shelter_name}</h3>
+                    <p><strong>Address:</strong> ${shelter.address}</p>
+                    <p><strong>Contact:</strong> ${shelter.contact_number}</p>
+                    <p><strong>Email:</strong> <a href="mailto:${shelter.email}">${shelter.email}</a></p>
+                </div>
+            `).join("");
+        })
+        .catch(err => {
+            console.error("Failed to load shelters:", err);
+        });
+});
+function fetchReviews(shelterId) {
+    fetch(`/get_reviews/${shelterId}`)
+        .then(response => response.json())
+        .then(data => {
+            const reviewContainer = document.getElementById(`reviewContainer-${shelterId}`);
+            if (!data.length) {
+                reviewContainer.innerHTML = "<p>No reviews yet.</p>";
+                return;
+            }
+
+            reviewContainer.innerHTML = data.map(review => `
+                <div class="review-card">
+                    <p><strong>${review.user_name}</strong> (${review.rating} ★)</p>
+                    <p>${review.review}</p>
+                </div>
+            `).join("");
+        })
+        .catch(error => {
+            console.error(`Error fetching reviews for shelter ${shelterId}:`, error);
+        });
+}
+
+// Function to submit a review for a specific shelter
+function submitReview(event, shelterId) {
+    event.preventDefault();
+
+    const rating = document.getElementById(`rating-${shelterId}`).value;
+    const review = document.getElementById(`review-${shelterId}`).value;
+
+    fetch("/submit_review", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ shelter_id: shelterId, rating: rating, review: review })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            fetchReviews(shelterId); // Refresh reviews
+        } else if (data.error) {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error("Error submitting review:", error);
+        alert("An error occurred while submitting your review.");
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("/get_shelters")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById("shelterContainer");
+
+            if (!data.length) {
+                container.innerHTML = "<p>No shelters found.</p>";
+                return;
+            }
+
+            container.innerHTML = data.map(shelter => `
+                <div class="shelter-card">
+                    <img src="${shelter.image_url}" alt="Shelter Image">
+                    <h3>${shelter.shelter_name}</h3>
+                    <p><strong>Address:</strong> ${shelter.address}</p>
+                    <p><strong>Contact:</strong> ${shelter.contact_number}</p>
+                    <p><strong>Email:</strong> <a href="mailto:${shelter.email}">${shelter.email}</a></p>
+                    
+                    <!-- Reviews Section -->
+                    <div class="review-section" id="reviewSection-${shelter.shelter_id}">
+                        <h4>Reviews</h4>
+                        <div class="review-container" id="reviewContainer-${shelter.shelter_id}">
+                            <!-- Reviews will be dynamically loaded here -->
+                        </div>
+                        <h4>Leave a Review</h4>
+                        <form class="review-form" onsubmit="submitReview(event, ${shelter.shelter_id})">
+                            <label for="rating-${shelter.shelter_id}">Rating:</label>
+                            <select id="rating-${shelter.shelter_id}" name="rating" required>
+                                <option value="5">★★★★★</option>
+                                <option value="4">★★★★☆</option>
+                                <option value="3">★★★☆☆</option>
+                                <option value="2">★★☆☆☆</option>
+                                <option value="1">★☆☆☆☆</option>
+                            </select>
+                            <br>
+                            <label for="review-${shelter.shelter_id}">Review:</label>
+                            <textarea id="review-${shelter.shelter_id}" name="review" required></textarea>
+                            <br>
+                            <button type="submit">Submit Review</button>
+                        </form>
+                    </div>
+                </div>
+            `).join("");
+
+            // Fetch reviews for each shelter
+            data.forEach(shelter => fetchReviews(shelter.shelter_id));
+        })
+        .catch(err => {
+            console.error("Failed to load shelters:", err);
+        });
+});
+
         function logout() {
             if (confirm("Are you sure you want to logout?")) {
                 fetch('/logout', {
@@ -140,34 +308,37 @@
             }
         }
 
+
+        document.getElementById("confirmAdoptBtn").addEventListener("click", function () {
+    console.log("Proceed to Application button clicked"); // Debugging
+    openApplicationModal();
+});
         function fetchPets() {
-            fetch("/get_pets")
-                .then(response => response.json())
-                .then(data => {
-                    const petContainer = document.getElementById("petContainer");
-                    petContainer.innerHTML = data
-                    .filter(pet => pet.evaluation_status !== "Approved")
-                    .map(pet => `
+    fetch("/get_pets")
+        .then(response => response.json())
+        .then(data => {
+            const petContainer = document.getElementById("petContainer");
+            petContainer.innerHTML = data
+                .filter(pet => pet.evaluation_status !== "Approved")  // Ensure adopted pets are not shown
+                .map(pet => `
+                    <div class="pet-card">
+                        <img src="${pet.photo_url || '/assets/default-pet.jpg'}" alt="Pet Image">
+                        <h3>${encodeHTML(pet.pet_breed) || "Unnamed Pet"}</h3>
+                        <p><strong>Height(cm):</strong> ${pet.pet_height || "Unknown"}</p>
+                        <p><strong>Weight(kg):</strong> ${pet.pet_weight || "Unknown"}</p>
+                        <p><strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}</p>
+                        <p><strong>Available:</strong> ${pet.quantity || "Not Available"}</p>
+                        <button class="adopt-btn">Adopt</button>
+                    </div>
+                `).join("");
 
-                        <div class="pet-card">
-                            <img src="${pet.photo_url || '/assets/default-pet.jpg'}" alt="Pet Image">
-                            <h3>${encodeHTML(pet.pet_breed) || "Unnamed Pet"}</h3>
-                            <p><strong>Height:</strong> ${pet.pet_height || "Unknown"}</p>
-                            <p><strong>Weight:</strong> ${pet.pet_weight || "Unknown"}</p>
-                            <p><strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}</p>
-                            <p><strong>Available:</strong> ${pet.quantity || "Available"}</p>
-                            <button class="adopt-btn">Adopt</button>
-                        </div>
-                    `).join("");
-
-                    const adoptButtons = document.querySelectorAll(".adopt-btn");
-                    adoptButtons.forEach((button, index) => {
-                        button.addEventListener("click", () => openAdoptModal(data[index]));
-                    });
-                })
-                .catch(error => console.error("Error fetching pets:", error));
-        }
-
+            const adoptButtons = document.querySelectorAll(".adopt-btn");
+            adoptButtons.forEach((button, index) => {
+                button.addEventListener("click", () => openAdoptModal(data[index]));
+            });
+        })
+        .catch(error => console.error("Error fetching pets:", error));
+}
         function encodeHTML(str) {
             return str ? str.replace(/</g, "&lt;").replace(/>/g, "&gt;") : "";
         }
@@ -175,25 +346,51 @@
         let currentPet = null;
 
         function openAdoptModal(pet) {
-            currentPet = pet;
-            const petDetails = document.getElementById('petDetails');
-            petDetails.innerHTML = `
-                <strong>Breed:</strong> ${encodeHTML(pet.pet_breed)}<br>
-                <strong>Height:</strong> ${pet.pet_height || "Unknown"}<br>
-                <strong>Weight:</strong> ${pet.pet_weight || "Unknown"}<br>
-                <strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}<br>
-                <strong>Available:</strong> ${pet.quantity || "Available"}<br>
-            `;
-            document.getElementById('adoptModal').style.display = "block";
-        }
+        currentPet = pet;
+        const petDetails = document.getElementById('petDetails');
+        petDetails.innerHTML = `
+        <strong>Breed:</strong> ${encodeHTML(pet.pet_breed)}<br>
+        <strong>Height:</strong> ${pet.pet_height || "Unknown"}<br>
+        <strong>Weight:</strong> ${pet.pet_weight || "Unknown"}<br>
+        <strong>Shelter:</strong> ${pet.shelter_name || "Not specified"}<br>
+        <strong>Available:</strong> ${pet.quantity || "Not Available"}<br>
+    `;
+    document.getElementById('petId').value = pet.pet_id; // Set pet ID in the form
+    document.getElementById('adoptModal').style.display = "block";
+}
 
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("/adoption_history_data")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById("adoptionHistoryContainer");
+
+            if (!data.length) {
+                container.innerHTML = "<p>No adoptions found.</p>";
+                return;
+            }
+
+            container.innerHTML = data.map(app => `
+                <div class="history-card">
+                    <img src="${app.photo_url}" alt="Pet Image">
+                    <h3>${app.pet_breed} (${app.pet_type})</h3>
+                    <p><strong>Status:</strong> ${app.status}</p>
+                    <p><strong>Pickup Date:</strong> ${app.pickup_date}</p>
+                </div>
+            `).join("");
+        })
+        .catch(err => {
+            console.error("Failed to load adoption history:", err);
+        });
+});
         function closeAdoptModal() {
             document.getElementById('adoptModal').style.display = "none";
         }
 
         function openApplicationModal() {
-            document.getElementById('applicationModal').style.display = 'block';
-        }
+    console.log("Opening application modal"); // Debugging
+    document.getElementById('applicationModal').style.display = 'block';
+}
 
         function closeApplicationModal() {
             document.getElementById('applicationModal').style.display = 'none';
@@ -209,54 +406,51 @@
             if (event.target === modal2) closeApplicationModal();
         });
 
-        document.getElementById('confirmAdoptBtn').addEventListener('click', function() {
-            closeAdoptModal();
-            // Set petId when opening the application form
-            document.getElementById('petId').value = currentPet.pet_id;
-            openApplicationModal();
-        });
-
         document.getElementById('adoptionForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+    event.preventDefault();
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    submitButton.disabled = true;  // Disable submit button to prevent double submission
 
-            const petId = document.getElementById('petId').value;
-            const noAdoption = document.getElementById('noAdoption').value;
-            const pickupDate = document.getElementById('pickupDate').value;
-            const adoptionIncome = document.getElementById('adoptionIncome').value;
-            const adoptionHistory = document.getElementById('adoptionHistory').value;
-            const behavioralAssess = document.getElementById('behavioralAssess').value;
+    const petId = document.getElementById('petId').value;
+    const noAdoption = document.getElementById('noAdoption').value;
+    const pickupDate = document.getElementById('pickupDate').value;
+    const adoptionIncome = document.getElementById('adoptionIncome').value;
+    const adoptionHistory = document.getElementById('adoptionHistory').value;
+    const behavioralAssess = document.getElementById('behavioralAssess').value;
 
-            const applicationData = {
-                pet_id: petId,
-                no_adoption: noAdoption,
-                pickup_date: pickupDate,
-                adoption_income: adoptionIncome,
-                adoption_history: adoptionHistory,
-                behavioral_assess: behavioralAssess
-            };
+    const applicationData = {
+        pet_id: petId,
+        no_adoption: noAdoption,
+        pickup_date: pickupDate,
+        adoption_income: adoptionIncome,
+        adoption_history: adoptionHistory,
+        behavioral_assess: behavioralAssess
+    };
 
-            fetch("/application", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(applicationData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    alert(data.message);
-                    closeApplicationModal();
-                } else if (data.error) {
-                    alert(data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error submitting application:", error);
-                alert("An error occurred while submitting your application.");
-            });
-        });
-
+    fetch("/application", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(applicationData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            alert(data.message);
+            closeApplicationModal();
+        } else if (data.error) {
+            alert(data.error);
+        }
+    })
+    .catch(error => {
+        console.error("Error submitting application:", error);
+        alert("An error occurred while submitting your application.");
+    })
+    .finally(() => {
+        submitButton.disabled = false;  // Re-enable submit button
+    });
+});
         document.addEventListener("DOMContentLoaded", fetchPets);
     </script>
 </body>

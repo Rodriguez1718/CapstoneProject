@@ -96,97 +96,124 @@
 
         // Register function (sends data to Flask route)
         function register() {
-            const firstname = document.getElementById('register-firstname').value;
-            const lastname = document.getElementById('register-lastname').value;
-            const phone = document.getElementById('register-phone').value;
-            const address = document.getElementById('register-address').value;
-            const username = document.getElementById('register-username').value;
-            const password = document.getElementById('register-password').value;
-            
-            // Validate inputs
-            if (!firstname || !lastname || !phone || !address || !username || !password) {
-                alert("All fields are required!");
-                return;
-            }
+    const firstname = document.getElementById('register-firstname').value;
+    const lastname = document.getElementById('register-lastname').value;
+    const phone = document.getElementById('register-phone').value;
+    const address = document.getElementById('register-address').value;
+    const username = document.getElementById('register-username').value;
+    const password = document.getElementById('register-password').value;
 
-            const payload = {
-                firstname: firstname,
-                lastname: lastname,
-                phone: phone,
-                address: address,
-                username: username,
-                password: password
-            };
+    // Validate inputs
+    if (!firstname || !lastname || !phone || !address || !username || !password) {
+        alert("All fields are required!");
+        return;
+    }
 
-            fetch('/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data); // Debugging step
-                if (data.message === "Registration successful!") {
-                    alert("Registration successful! You can now log in.");
-                    showTab('login'); // Switch to the login tab
-                } else {
-                    document.getElementById('register-error').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error during registration:', error);
-                document.getElementById('register-error').style.display = 'block';
-            });
+    if (username.length < 6) {
+        alert("Username must be at least 6 characters long.");
+        return;
+    }
+
+    if (password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return;
+    }
+
+    if (!/^\d{11}$/.test(phone)) {
+        alert("Phone number must be exactly 11 digits.");
+        return;
+    }
+
+    const payload = {
+        firstname: firstname,
+        lastname: lastname,
+        phone: phone,
+        address: address,
+        username: username,
+        password: password
+    };
+
+    fetch('/register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data); // Debugging step
+        if (data.message === "Registration successful!") {
+            alert("Registration successful! You can now log in.");
+            showTab('login'); // Switch to the login tab
+        } else {
+            document.getElementById('register-error').style.display = 'block';
         }
+    })
+    .catch(error => {
+        console.error('Error during registration:', error);
+        document.getElementById('register-error').style.display = 'block';
+    });
+}
 
-        // Login function (sends data to Flask route)
-        function login() {
-            const username = document.getElementById('login-username').value;
-            const password = document.getElementById('login-password').value;
+function login() {
+    const username = document.getElementById('login-username').value;
+    const password = document.getElementById('login-password').value;
+
+    // Validate inputs
+    if (!username || !password) {
+        document.getElementById('login-error').style.display = 'block';
+        return;
+    }
+
+    if (username.length < 5) {
+        alert("Username must be at least 6 characters long.");
+        return;
+    }
+
+    if (password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return;
+    }
+
+    const payload = {
+        username: username,
+        password: password
+    };
+
+    fetch('/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Server error');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log(data);  // Check the server response in the console
+        if (data.message === "Login successful!") {
+            localStorage.setItem("role", data.role);
             
-            // Validate inputs
-            if (!username || !password) {
-                document.getElementById('login-error').style.display = 'block';
-                return;
+            if (data.role === "adopter") {
+                window.location.href = '/adopter';  // Redirect to adopter's dashboard
+            } else if (data.role === "admin") {
+                window.location.href = '/admin';  // Redirect to admin's dashboard
             }
-
-            const payload = {
-                username: username,
-                password: password
-            };
-
-            fetch('/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'include',
-                body: JSON.stringify(payload)
-            })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Server error');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                        console.log(data);  // Check the server response in the console
-                        if (data.message === "Login successful!") {
-                            localStorage.setItem("role", data.role);
-                            
-                            if (data.role === "adopter") {
-                                window.location.href = '/adopter';  // Redirect to adopter's dashboard
-                            } else if (data.role === "admin") {
-                                window.location.href = '/admin';  // Redirect to admin's dashboard
-                            }
-                        } else {
-                            document.getElementById('login-error').style.display = 'block';
-                        }
-                    });
-
-                                            }
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        console.error('Error during login:', error);
+        document.getElementById('login-error').style.display = 'block';
+    });
+}
         
 
 
